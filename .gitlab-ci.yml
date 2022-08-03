@@ -8,7 +8,18 @@ variables:
     NF_WORKFLOW_OPTS: "--fastq test_data/reads.fastq.gz"
 
 
+# Remove this block in downstream templates
+conda-run:
+    tags: [] # no need for big ram
+singularity-run:
+    tags: [] # no need for big ram
+# end
+
 docker-run:
+
+    # Remove this directive in downstream templates
+    tags: [] # no need for big ram
+
     # Define a 1D job matrix to inject a variable named MATRIX_NAME into
     #   the CI environment, we can use the value of MATRIX_NAME to determine
     #   which options to apply as part of the rules block below
