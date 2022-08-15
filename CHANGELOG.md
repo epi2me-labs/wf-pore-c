@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitHub issues template.
 - Return of metadata with fastqingress
 - Check of number of samples and barcoded directories
+### Updated
+- Bumped base container to v0.2.0
 ### Fixed
 - Output argument in Fastqingress homogenised.
 
