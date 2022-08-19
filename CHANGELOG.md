@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bumped base container to v0.2.0
 ### Fixed
 - Output argument in Fastqingress homogenised.
+- Sanitize fastq intermittent null object error.
 
 ## [v0.2.0]
 ### Added
