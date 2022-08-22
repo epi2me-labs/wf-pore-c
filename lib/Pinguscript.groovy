@@ -1,7 +1,4 @@
-
-@Grab('io.github.http-builder-ng:http-builder-ng-okhttp:0.14.2')
 import static groovy.json.JsonOutput.toJson
-import static groovyx.net.http.HttpBuilder.configure
 import groovy.json.JsonBuilder
 import groovy.json.JsonSlurper
 
@@ -44,15 +41,17 @@ class Pinguscript {
         def body_json = new JsonBuilder()
         def root = body_json "tracking_id": tracking_id,  "hostname": hosthash.toString(), "os": opsys.toString(),
                 "session": session.toString(), "data": data
-        def post_ping = configure {
-            request.uri = 'https://ping.oxfordnanoportal.com'
-            request.uri.path = '/epilaby' 
-            request.contentType = 'application/json'
-            request.accept = 'application/json'
-            request.body = body_json.toString()
-        }.post()
-        return (post_ping)
+        String postResult
+        ((HttpURLConnection)new URL('https://ping.oxfordnanoportal.com/epilaby').openConnection()).with({
+            requestMethod = 'POST'
+            doOutput = true
+            setRequestProperty('Content-Type', 'application/json') 
+            setRequestProperty('accept', 'application/json') 
+            outputStream.withPrintWriter({printWriter ->
+                 printWriter.write(body_json.toString())
+            })
+            postResult = inputStream.text
+        })
+        return (postResult)
     }
 }
-
-
