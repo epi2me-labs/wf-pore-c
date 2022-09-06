@@ -61,6 +61,7 @@ process getParams {
 process makeReport {
     label "wftemplate"
     input:
+        val metadata
         path "seqs.txt"
         path "versions/*"
         path "params.json"
@@ -68,11 +69,14 @@ process makeReport {
         path "wf-template-*.html"
     script:
         report_name = "wf-template-" + params.report_name + '.html'
+        def metadata = new JsonBuilder(metadata).toPrettyString()
     """
+    echo '${metadata}' > metadata.json
     report.py $report_name \
         --versions versions \
         seqs.txt \
-        --params params.json
+        --params params.json \
+        --metadata metadata.json
     """
 }
 
@@ -102,7 +106,8 @@ workflow pipeline {
         summary = summariseReads(reads)
         software_versions = getVersions()
         workflow_params = getParams()
-        report = makeReport(summary, software_versions.collect(), workflow_params)
+        metadata = reads.map { it -> return it[1] }.toList()
+        report = makeReport(metadata, summary, software_versions.collect(), workflow_params)
     emit:
         results = summary.concat(report, workflow_params)
         // TODO: use something more useful as telemetry
