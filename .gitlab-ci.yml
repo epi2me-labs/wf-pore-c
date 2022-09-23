@@ -6,7 +6,7 @@ include:
 variables:
     # We'll use the single-file case for these runs
     NF_WORKFLOW_OPTS: "--fastq test_data/reads.fastq.gz"
-    CI_FLAVOUR: "new"
+    CI_FLAVOUR: "new" # set to "classic" for old-style CI
 
 
 # Remove this block in downstream templates
