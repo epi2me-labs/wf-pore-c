@@ -120,10 +120,7 @@ WorkflowMain.initialise(workflow, params, log)
 workflow {
 
     if (params.disable_ping == false) {
-        try { 
-            Pinguscript.ping_post(workflow, "start", "none", params.out_dir, params)
-        } catch(RuntimeException e1) {
-        }
+        Pinguscript.ping_post(workflow, "start", "none", params.out_dir, params)
     }
     
     samples = fastq_ingress([
@@ -139,16 +136,10 @@ workflow {
 
 if (params.disable_ping == false) {
     workflow.onComplete {
-        try{
-            Pinguscript.ping_post(workflow, "end", "none", params.out_dir, params)
-        }catch(RuntimeException e1) {
-        }
+        Pinguscript.ping_post(workflow, "end", "none", params.out_dir, params)
     }
     
     workflow.onError {
-        try{
-            Pinguscript.ping_post(workflow, "error", "$workflow.errorMessage", params.out_dir, params)
-        }catch(RuntimeException e1) {
-        }
+        Pinguscript.ping_post(workflow, "error", "$workflow.errorMessage", params.out_dir, params)
     }
 }
