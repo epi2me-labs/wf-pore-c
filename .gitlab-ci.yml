@@ -79,6 +79,13 @@ docker-run:
           variables:
               NF_WORKFLOW_OPTS: "--fastq s3://ont-exd-int-s3-euwst1-epi2me-labs/wf-template/test_data/fastq_ingress/case04"
 
+        - if: $MATRIX_NAME == "case05"
+          variables:
+              NF_WORKFLOW_OPTS: "--fastq test_data/fastq_ingress/case05"
+        - if: $MATRIX_NAME == "case05-s3"
+          variables:
+              NF_WORKFLOW_OPTS: "--fastq s3://ont-exd-int-s3-euwst1-epi2me-labs/wf-template/test_data/fastq_ingress/case05"
+
         - if: $MATRIX_NAME == "case06"
           variables:
               NF_WORKFLOW_OPTS: "--fastq test_data/fastq_ingress/case06 --sample_sheet test_data/fastq_ingress/case06/sample_sheet.csv"
