@@ -1,0 +1,1 @@
+{"seed": 42122, "genome_size": 10000, "num_chroms": 2, "cut_rate": 0.001, "enzyme": "NlaIII", "num_concatemers": 1000, "num_haplotypes": 2, "variant_density": 0.05, "p_cis": 0.8, "mean_frags_per_concatemer": 10, "max_frags_per_concatemer": 10}

@@ -1,143 +1,184 @@
-#!/usr/bin/env nextflow
-
-// Developer notes
-//
-// This template workflow provides a basic structure to copy in order
-// to create a new workflow. Current recommended pratices are:
-//     i) create a simple command-line interface.
-//    ii) include an abstract workflow scope named "pipeline" to be used
-//        in a module fashion
-//   iii) a second concreate, but anonymous, workflow scope to be used
-//        as an entry point when using this workflow in isolation.
-
+#!usr/bin/env nextflow
 import groovy.json.JsonBuilder
 nextflow.enable.dsl = 2
 
-include { fastq_ingress } from './lib/fastqingress'
+include {
+    index_ref_fai
+    decompress_ref
+    publish_artifact
+    chunk_ubam
+    merge_namesorted_bams
+    merge_coordsorted_bams
+    mosdepth_coverage
+} from './modules/local/common'
 
-process summariseReads {
-    // concatenate fastq and fastq.gz in a dir
-
-    label "wftemplate"
-    cpus 1
-    input:
-        tuple path(directory), val(meta)
-    output:
-        path "${meta.sample_id}.stats"
-    shell:
-    """
-    fastcat -s ${meta.sample_id} -r ${meta.sample_id}.stats -x ${directory} > /dev/null
-    """
-}
-
-
-process getVersions {
-    label "wftemplate"
-    cpus 1
-    output:
-        path "versions.txt"
-    script:
-    """
-    python -c "import pysam; print(f'pysam,{pysam.__version__}')" >> versions.txt
-    fastcat --version | sed 's/^/fastcat,/' >> versions.txt
-    """
-}
+include {
+    digest_concatemers
+    minimap2_ubam_namesort as map_monomers
+    haplotagReads as haplotag_alignments
+    annotate_monomers
+} from './modules/local/pore-c'
+include {
+   to_pairs_file
+   pairsToCooler
+   merge_pairs
+   merge_pairs_stats
+   create_restriction_bed
+} from './modules/local/4dn'
 
 
-process getParams {
-    label "wftemplate"
-    cpus 1
-    output:
-        path "params.json"
-    script:
-        def paramsJSON = new JsonBuilder(params).toPrettyString()
-    """
-    # Output nextflow params object to JSON
-    echo '$paramsJSON' > params.json
-    """
-}
+include { check_input } from "./subworkflows/local/input_check"
+include { prepare_genome } from "./subworkflows/local/prepare_genome"
 
-
-process makeReport {
-    label "wftemplate"
-    input:
-        val metadata
-        path "seqs.txt"
-        path "versions/*"
-        path "params.json"
-    output:
-        path "wf-template-*.html"
-    script:
-        report_name = "wf-template-" + params.report_name + '.html'
-        def metadata = new JsonBuilder(metadata).toPrettyString()
-    """
-    echo '${metadata}' > metadata.json
-    report.py $report_name \
-        --versions versions \
-        seqs.txt \
-        --params params.json \
-        --metadata metadata.json
-    """
-}
-
-
-// See https://github.com/nextflow-io/nextflow/issues/1636
-// This is the only way to publish files from a workflow whilst
-// decoupling the publish from the process steps.
-process output {
-    // publish inputs to output directory
-    label "wftemplate"
-    publishDir "${params.out_dir}", mode: 'copy', pattern: "*"
-    input:
-        path fname
-    output:
-        path fname
-    """
-    echo "Writing output files."
-    """
-}
-
-
-// workflow module
-workflow pipeline {
-    take:
-        reads
-    main:
-        summary = summariseReads(reads)
-        software_versions = getVersions()
-        workflow_params = getParams()
-        metadata = reads.map { it -> return it[1] }.toList()
-        report = makeReport(metadata, summary, software_versions.collect(), workflow_params)
-    emit:
-        results = summary.concat(report, workflow_params)
-        // TODO: use something more useful as telemetry
-        telemetry = workflow_params
-}
-
-
-// entrypoint workflow
+// entrypointworkflow
 WorkflowMain.initialise(workflow, params, log)
+
+workflow POREC {
+    main:
+        if (params.disable_ping == false) {
+            Pinguscript.ping_post(workflow, 'start', 'none', params.out_dir, params)
+        }
+
+        /// PREPARE INPUTS  ///
+        // create channel of input concatemers
+        check_input(
+            params.chunk_size
+        ).set { ch_chunks }  // [meta, ubam_chunk]
+
+        // scalar channel of genome files.
+        ref = prepare_genome(params.ref, params.minimap2_settings)
+
+        // for each enzyme a bed file of the fragments
+        digest_ch = create_restriction_bed(
+            ch_chunks
+            .map(i -> [i[0].cutter])
+            .unique()
+            .combine(ref.fasta)
+            .combine(ref.fai)
+        )
+
+        /// RUN PORE-C TOOLS ///
+        // digest concatemers into monomers
+        ch_monomers = digest_concatemers(ch_chunks)
+        ch_monomers
+            .combine(ref.mmi)
+            .combine(ref.minimap2_settings)
+            .map{     // meta, ubam, mmi, minimap2_settings
+                it -> [it[0], it[1], it[2], it[3]]
+            }
+            .set{ch_mapping}
+        // map monomers against ref genome and add pore-c specific tags
+        ch_annotated_monomers  = map_monomers(ch_mapping) | annotate_monomers
+
+        // create a fork for samples that have phase info available
+        ch_annotated_monomers.cs_bam
+            .branch{
+                to_haplotag: it[0].vcf != null
+                no_haplotag: it[0].vcf == null
+            }
+            .set { haplotag_fork }
+
+        // haplotag bams when we have VCF available
+        (haplotag_fork
+            .to_haplotag  // [meta, bam bai]
+            .combine(ref.fasta)
+            .combine(ref.fai)
+            .map(i -> {
+                [
+                i[0], // meta
+                i[1], // bam
+                i[2], // bai
+                i[3], // fasta
+                i[4], // fai
+                i[0].vcf, // vcf
+                i[0].tbi, // tbi
+                ]
+            })) | haplotag_alignments | set {haplotagged_monomers}
+
+        // merge haplotagged and non-haplotagged coord-sorted bam chunks
+        // back to single channel
+        haplotag_fork
+            .no_haplotag
+            .mix(haplotagged_monomers.cs_bam)
+            .set { cs_bam_chunks }
+
+        /// MERGE PORE-C BAMS ///
+
+        // merge coord-sorted bams by sample_id
+        cs_bam = merge_coordsorted_bams(
+            cs_bam_chunks.map(i -> [i[0], i[1]])
+            .groupTuple()
+        )
+        // merge namesorted bams by sample_id
+        ns_bam = merge_namesorted_bams(
+            ch_annotated_monomers
+            .ns_bam
+            .map(i -> [i[0],  i[1]])
+            .groupTuple()
+        )
+
+        /// COVERAGE CALCULATIONS
+        if (params.coverage) {
+            // calculate coverage on the merged BAM
+            digest_ch
+                .cross(
+                    cs_bam
+                    .map(i -> [i[0].cutter, i[0], i[1], i[2]]) // [key, meta, bam, bai]
+                )
+                .map(i -> [
+                    i[1][1], // meta
+                    i[1][2], // bam
+                    i[1][3], // bai
+                    i[0][2], // bed
+                ]) | mosdepth_coverage | set{ coverage }
+        }
+        /// 4DN file formats
+        if (params.pairs || params.mcool ) {
+            (digest_ch
+                .cross(
+                    ch_annotated_monomers
+                    .ns_bam
+                    .map(i -> [i[0].cutter, i[0], i[1]]) // [key, meta, bam]
+                )
+                .map(i -> [
+                        i[1][1], // meta
+                        i[1][2], // bam
+                        i[0][1], // fai
+                        i[0][2], // bed
+                    ])
+                ) | to_pairs_file | set {pair_chunks}
+            if (params.mcool) {
+                mcool_chunks = pairsToCooler(
+                    pair_chunks
+                    .pairs
+                    .combine(Channel.of(params.cool_bin_size))
+                    .combine(Channel.of(params.mcool_resolutions))
+                )
+            }
+            if (params.pairs) {
+                unsorted_pairs = merge_pairs(
+                    pair_chunks.pairs.map(i -> [i[0], i[2]]).groupTuple()
+                )
+                pairs_stats = merge_pairs_stats(
+                    pair_chunks.stats.groupTuple()
+                )
+            }
+        }
+    emit:
+        name_sorted_bam = ns_bam
+        coord_sorted_bam = cs_bam
+}
+
 workflow {
-
-    if (params.disable_ping == false) {
-        Pinguscript.ping_post(workflow, "start", "none", params.out_dir, params)
-    }
-    
-    samples = fastq_ingress([
-        "input":params.fastq,
-        "sample":params.sample,
-        "sample_sheet":params.sample_sheet])
-
-    pipeline(samples)
-    output(pipeline.out.results)
-} 
+    POREC()
+}
 
 if (params.disable_ping == false) {
     workflow.onComplete {
-        Pinguscript.ping_post(workflow, "end", "none", params.out_dir, params)
+        Pinguscript.ping_post(workflow, 'end', 'none', params.out_dir, params)
     }
-    
+
     workflow.onError {
-        Pinguscript.ping_post(workflow, "error", "$workflow.errorMessage", params.out_dir, params)
+        Pinguscript.ping_post(workflow, 'error', "$workflow.errorMessage", params.out_dir, params)
     }
 }

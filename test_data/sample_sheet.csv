@@ -1,0 +1,3 @@
+sample_id,cutter,ubam,vcf
+S01,NlaIII,test_data/porec_test.concatemers.bam,test_data/porec_test.phased_variants.vcf.gz
+S02,NlaIII,test_data/porec_test.concatemers.bam,
