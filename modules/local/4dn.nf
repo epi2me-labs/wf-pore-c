@@ -60,16 +60,27 @@ process create_restriction_bed {
 
 process pairsToCooler {
     input:
-    tuple val(meta), path(fai), path(pairs), val(min_bin_width), val(resolutions)
+    tuple val(meta), path(fai), path(pairs), val(min_bin_width)
 
     output:
-    tuple val(meta), path("${pairs.baseName}.mcool")
+    tuple val(meta), path("${pairs.baseName}.cool")
 
     shell:
     """
-    cooler cload pairs -c1 2 -p1 3 -c2 4 -p2 5 $fai:${min_bin_width} $pairs contacts.cooler
-    cooler zoomify -r ${resolutions} -o ${pairs.baseName}.mcool  contacts.cooler
+    cooler cload pairs -c1 2 -p1 3 -c2 4 -p2 5 $fai:${min_bin_width} $pairs ${pairs.baseName}.cool
     """
 }
 
+
+process merge_mcools {
+    input: tuple val(meta), path('to_merge/src*.cool'), val(resolutions)
+    output: tuple val(meta), path("${prefix}.mcool")
+    shell:
+    prefix = task.ext.prefix ?: "${meta.sample_id}"
+    def args = task.ext.args ?: " "
+    """
+    cooler merge  ${prefix}.cool $args to_merge/src*.cool
+    cooler zoomify -r ${resolutions} -o ${prefix}.mcool  ${prefix}.cool
+    """
+}
 

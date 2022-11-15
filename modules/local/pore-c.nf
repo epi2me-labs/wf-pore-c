@@ -82,13 +82,11 @@ process haplotagReads {
           path("${bam.baseName}.ht.txt.gz"),
           emit: "haplotagged_monomers"
     shell:
+    args = task.ext.args ?: "--ignore-read-groups --skip-missing-contigs "
     """
-    whatshap haplotag \
-      --reference $ref \
-      -o ${bam.baseName}.ht.bam \
-      --output-haplotag-list ${bam.baseName}.ht.txt.gz \
-      --ignore-read-groups \
-      $phased_vcf $bam
+    whatshap haplotag --reference $ref  -o ${bam.baseName}.ht.bam \
+    --output-haplotag-list ${bam.baseName}.ht.txt.gz $args  $phased_vcf $bam
+
     samtools index -c ${bam.baseName}.ht.bam
     """
 }

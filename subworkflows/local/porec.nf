@@ -13,7 +13,6 @@ process chunk_ubam {
 }
 
 
-
 workflow porec {
     take:
         input_ch   // [[meta, ubam], [meta, ubam],...]

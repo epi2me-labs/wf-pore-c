@@ -32,7 +32,7 @@ process decompress_ref {
         file compressed_ref
     output:
         path "${compressed_ref.baseName}", emit: decompressed_ref
-    """comm
+    """
     gzip -df ${compressed_ref}
     """
 }
@@ -119,4 +119,3 @@ process mosdepth_coverage {
     mosdepth --threads $task.cpus --d4 --by $bed $args $prefix $bam
     """
 }
-

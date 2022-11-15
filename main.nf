@@ -21,6 +21,7 @@ include {
 include {
    to_pairs_file
    pairsToCooler
+   merge_mcools
    merge_pairs
    merge_pairs_stats
    create_restriction_bed
@@ -152,6 +153,10 @@ workflow POREC {
                     pair_chunks
                     .pairs
                     .combine(Channel.of(params.cool_bin_size))
+                )
+                mcool = merge_mcools(
+                    mcool_chunks
+                    .groupTuple()
                     .combine(Channel.of(params.mcool_resolutions))
                 )
             }
