@@ -18,28 +18,38 @@
                     "format": "directory-path",
                     "description": "Directory for output of all user-facing files."
                 },
-                "ubam": {
-                    "type": "string",
-                    "format": "file-path",
-                    "description": "An unaligned bam file or containing Pore-C concatemer sequences"
-                },
-                "sample": {
-                    "type": "string",
-                    "description": "A sample name for non-multiplexed data. Permissible if passing a file or directory of .ubam(.gz)."
-                },
                 "ref": {
                     "type": "string",
                     "format": "file-path",
                     "description": "A fasta file containing the reference genome to map against"
                 },
-               "cutter": {
+                "sample_sheet": {
+                    "type": "string",
+                    "format": "file-path",
+                    "description": "An optional sample sheet (see test_data/sample_sheet.csv). If provided then the ubam,vcf,sample and cutter parameters are ignored"
+                },
+                "ubam": {
+                    "type": "string",
+                    "format": "file-path",
+                    "description": "An unaligned bam file or containing Pore-C concatemer sequences"
+                },
+                "vcf": {
+                    "type": "string",
+                    "format": "file-path",
+                    "description": "An optional phased VCF file that will be used to haplotag alignments"
+                },
+                "sample": {
+                    "type": "string",
+                    "description": "A sample name for non-multiplexed data. Permissible if passing a file or directory of .ubam(.gz)."
+                },
+                "cutter": {
                     "type": "string",
                     "description": "The enzyme used in the restriction digest"
                 },
-               "chunk_size": {
+                "chunk_size": {
                     "type": "integer",
                     "default": -1,
-                    "description": "Split input bam into reads of this size",
+                    "description": "Split input bam into reads of this size"
                 },
                 "threads": {
                     "type": "integer",
@@ -62,9 +72,90 @@
                     "description": "Set max number of threads to use for uncompressing uBAM and generating FASTQ for alignment (limited by config executor cpus)"
                 }
             },
-            "required": [
-                "ref"
-            ]
+            "required": ["ref"]
+        },
+        "porec": {
+            "title": "Pore-C Tools",
+            "type": "object",
+            "description": "Parameters to control the pore-c tools",
+            "properties": {
+                "minimap2_settings": {
+                    "type": "string",
+                    "default": "-x map-ont",
+                    "description": "The minimap2 settings for mapping monomers"
+                },
+                "coverage": {
+                    "type": "boolean",
+                    "default": "false",
+                    "description": "Calculate restriction-fragment coverage using mosdepth"
+                }
+            }
+        },
+        "chromunity": {
+            "title": "Chromunity",
+            "type": "object",
+            "description": "Create files for Chromunity analyses",
+            "properties": {
+                "chromunity": {
+                    "type": "boolean",
+                    "default": "false",
+                    "description": "Create parquet files for Chromunity"
+                },
+                "chromunity_merge_distance": {
+                    "type": "integer",
+                    "default": null,
+                    "description": "Merge colinear alignments separated by less than this distance into a single monomer"
+                }
+            }
+        },
+        "4DN": {
+            "title": "4DN files",
+            "type": "object",
+            "description": "Create files for the 4D nucleome toolset",
+            "properties": {
+                "pairs": {
+                    "type": "boolean",
+                    "default": "false",
+                    "description": "Create a 4DN-format pairs file (also calculate stats)."
+                },
+                "mcool": {
+                    "type": "boolean",
+                    "default": "false",
+                    "description": "Create a multi-resolution cooler file"
+                },
+                "cool_bin_size": {
+                    "type": "integer",
+                    "default": 1000,
+                    "description": "The resolution of the base cooler file"
+                },
+                "mcool_resolutions": {
+                    "type": "string",
+                    "default": "4DN",
+                    "description": "The resolutions of the mcool file (see cooler documentation for details)."
+                }
+            }
+        },
+        "Pair-end BAM files": {
+            "title": "Paired-end BAM",
+            "type": "object",
+            "description": "Create mock paired-end BAM files for legacy tools",
+            "properties": {
+                "paired_end": {
+                    "type": "boolean",
+                    "default": "false",
+                    "description": "Create mock paired-end BAM files."
+                },
+                "paired_end_minimum_distance": {
+                    "type": "integer",
+                    "default": null,
+                    "description": "Remove trans pairs and cis- pairs separated by a distance shorter than this"
+                },
+                "paired_end_maximum_distance": {
+                    "type": "integer",
+                    "default": null,
+                    "description": "Remove trans pairs and cis- pairs separated by a distance greater than this"
+                }
+            }
         },
         "meta_data": {
             "title": "Meta Data",
