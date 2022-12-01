@@ -17,6 +17,7 @@ include {
     minimap2_ubam_namesort as map_monomers
     haplotagReads as haplotag_alignments
     annotate_monomers
+    merge_parquets_to_dataset
 } from './modules/local/pore-c'
 include {
    to_pairs_file
@@ -39,7 +40,6 @@ workflow POREC {
         if (params.disable_ping == false) {
             Pinguscript.ping_post(workflow, 'start', 'none', params.out_dir, params)
         }
-
         /// PREPARE INPUTS  ///
         // create channel of input concatemers
         check_input(
@@ -49,16 +49,7 @@ workflow POREC {
         // scalar channel of genome files.
         ref = prepare_genome(params.ref, params.minimap2_settings)
 
-        // for each enzyme a bed file of the fragments
-        digest_ch = create_restriction_bed(
-            ch_chunks
-            .map(i -> [i[0].cutter])
-            .unique()
-            .combine(ref.fasta)
-            .combine(ref.fai)
-        )
-
-        /// RUN PORE-C TOOLS ///
+       /// RUN PORE-C TOOLS ///
         // digest concatemers into monomers
         ch_monomers = digest_concatemers(ch_chunks)
         ch_monomers
@@ -118,6 +109,18 @@ workflow POREC {
             .groupTuple()
         )
 
+
+        if (params.coverage || params.pairs || params.mcool ) {
+            // for each enzyme a bed file of the fragments
+            digest_ch = create_restriction_bed(
+                ch_chunks
+                .map(i -> [i[0].cutter])
+                .unique()
+                .combine(ref.fasta)
+                .combine(ref.fai)
+            )
+        }
+
         /// COVERAGE CALCULATIONS
         if (params.coverage) {
             // calculate coverage on the merged BAM
@@ -168,6 +171,14 @@ workflow POREC {
                     pair_chunks.stats.groupTuple()
                 )
             }
+        }
+        /// CHROMUNITY
+        if (params.chromunity) {
+            chromunity_pq = merge_parquets_to_dataset(
+                ch_annotated_monomers
+                .chromunity_pq
+                .groupTuple()
+            )
         }
     emit:
         name_sorted_bam = ns_bam

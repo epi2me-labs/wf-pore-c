@@ -16,9 +16,7 @@ process chunk_ubam {
 workflow check_input {
     take:
     chunk_size
-    // path sample_sheet TODO
     main:
-        // TODO: parse this from sample sheet to enable multiple
         if (params.sample_sheet == null) {
             // samples for now just pass on command line
             ch_samples = Channel.of(
@@ -45,11 +43,15 @@ workflow check_input {
 
 def create_concatemer_channel(row) {
     def meta = [:]
+    // TODO: porec tools can also process fastq support here
     // TODO: do something like fastqingress for minknow directories
     ubam = file(row.ubam, checkExists: true )
     meta.sample_id = row.sample_id ?: ubam.baseName
     meta.cutter = row.cutter
     // TODO: better check for empty string
+    // FIXME: maybe leave this as a string for now, every time the
+    // VCF is touched the entire pipeline reruns rather than
+    // just the steps that depend on
     meta.vcf = (row.vcf == null || row.vcf == '') ? null : file(row.vcf, checkExists: true)
     meta.tbi = meta.vcf == null ? null : file(row.vcf + '.tbi')
     if (meta.tbi != null) {

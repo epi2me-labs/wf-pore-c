@@ -6,8 +6,9 @@ process digest_concatemers {
     tuple val(meta), path("${ubam.baseName}.monomers.bam")
 
     script:
+    args = task.ext.args ?: " "
     """
-    pore-c2 utils digest-concatemers $ubam ${meta.cutter} ${ubam.baseName}.monomers.bam
+    pore-c2 digest $ubam ${meta.cutter} ${ubam.baseName}.monomers.bam $args
     """
 }
 
@@ -54,10 +55,21 @@ process annotate_monomers {
           path("annotated/${bam.baseName}.cs.bam"),
           path("annotated/${bam.baseName}.cs.bam.csi"),
           emit: cs_bam
+    tuple val(meta),
+          path("annotated/${bam.baseName}.chromunity.parquet"),
+          emit: chromunity_pq, optional: true
+
     script:
+    args = task.ext.args ?: " "
+    if (params.chromunity) {
+        args += "--chromunity "
+        if (params.chromunity_merge_distance != null) {
+            args += " --chromunity-merge-distance ${params.chromunity_merge_distance} "
+        }
+    }
     """
     mkdir annotated
-    pore-c2 utils process-monomer-alignments $bam annotated/${bam.baseName}
+    pore-c2 parse-bam $bam annotated/${bam.baseName} $args
     samtools sort --write-index -o annotated/${bam.baseName}.cs.bam annotated/${bam.baseName}.ns.bam
     """
 }
@@ -92,3 +104,20 @@ process haplotagReads {
 }
 
 
+/// gather individual parquets into a single directory
+process merge_parquets_to_dataset {
+    input:
+    tuple val(meta),
+          path("to_merge/part?????.parquet")
+    output:
+    tuple val(meta),
+          path("$prefix"),
+          emit: "parquets"
+    shell:
+    prefix = task.ext.prefix ?: "${meta.sample_id}.chromunity.parquet"
+    """
+    mkdir $prefix
+    cp to_merge/part*.parquet  $prefix/
+    """
+
+}

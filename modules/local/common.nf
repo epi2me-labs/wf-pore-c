@@ -74,7 +74,7 @@ process merge_namesorted_bams {
     shell:
     prefix = task.ext.prefix ?: "${meta.sample_id}.ns"
     """
-    samtools merge -n --threads $task.cpus -o ${prefix}.bam --no-PG to_merge/src*.bam
+    samtools cat --threads $task.cpus -o ${prefix}.bam --no-PG to_merge/src*.bam
     """
 }
 
@@ -86,7 +86,7 @@ process merge_coordsorted_bams {
     shell:
     prefix = task.ext.prefix ?: "${meta.sample_id}.cs"
     """
-    samtools merge --threads $task.cpus -o ${prefix}.bam --write-index --no-PG to_merge/src*.bam
+    samtools merge --threads $task.cpus -o ${prefix}.bam -p --write-index --no-PG to_merge/src*.bam
     """
 }
 

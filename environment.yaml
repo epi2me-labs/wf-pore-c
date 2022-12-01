@@ -23,4 +23,4 @@ dependencies:
   - d4tools
   - picard
   - pip:
-      - "git+ssh://git@git.oxfordnanolabs.local/eharrington/pore-c2.git@0.6.0#egg=pore-c2"
+      - "git+ssh://git@git.oxfordnanolabs.local/eharrington/pore-c2.git@0.7.0#egg=pore-c2"
