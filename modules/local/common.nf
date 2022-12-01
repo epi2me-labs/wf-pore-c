@@ -70,11 +70,12 @@ process merge_namesorted_bams {
     input:
     tuple val(meta), path('to_merge/src*.bam')
     output:
-    tuple val(meta), path("${prefix}.bam")
+    tuple val(meta), path("${prefix}.${suffix}.bam")
     shell:
-    prefix = task.ext.prefix ?: "${meta.sample_id}.ns"
+    suffix = task.ext.suffix ?: "ns"
+    prefix = task.ext.prefix ?: "${meta.sample_id}"
     """
-    samtools cat --threads $task.cpus -o ${prefix}.bam --no-PG to_merge/src*.bam
+    samtools cat --threads $task.cpus -o ${prefix}.${suffix}.bam --no-PG to_merge/src*.bam
     """
 }
 

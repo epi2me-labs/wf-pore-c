@@ -8,6 +8,7 @@ include {
     publish_artifact
     chunk_ubam
     merge_namesorted_bams
+    merge_namesorted_bams as merge_paired_end_bams
     merge_coordsorted_bams
     mosdepth_coverage
 } from './modules/local/common'
@@ -180,6 +181,19 @@ workflow POREC {
                 .groupTuple()
             )
         }
+
+        /// Paired end bams
+        if (params.paired_end) {
+            pe_bam = merge_paired_end_bams(
+                ch_annotated_monomers
+                .paired_end_bam
+                .map(i -> [i[0],  i[1]])
+                .groupTuple()
+            )
+        }
+
+
+
     emit:
         name_sorted_bam = ns_bam
         coord_sorted_bam = cs_bam

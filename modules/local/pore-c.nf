@@ -58,14 +58,28 @@ process annotate_monomers {
     tuple val(meta),
           path("annotated/${bam.baseName}.chromunity.parquet"),
           emit: chromunity_pq, optional: true
-
+    tuple val(meta),
+          path("annotated/${bam.baseName}.pe.bam"),
+          emit: paired_end_bam, optional: true
     script:
     args = task.ext.args ?: " "
     if (params.chromunity) {
         args += "--chromunity "
         if (params.chromunity_merge_distance != null) {
-            args += " --chromunity-merge-distance ${params.chromunity_merge_distance} "
+            args += "--chromunity-merge-distance ${params.chromunity_merge_distance} "
         }
+    }
+    if (params.paired_end) {
+        args += "--paired-end "
+        if (params.paired_end_minimum_distance != null) {
+            args += "--paired-end-minimum-distance ${params.paired_end_minimum_distance} "
+        }
+        if (params.paired_end_maximum_distance != null) {
+            args += "--paired-end-maximum-distance ${params.paired_end_maximum_distance} "
+        }
+    }
+    if (params.summary) {
+        args  += "--summary "
     }
     """
     mkdir annotated
@@ -119,5 +133,4 @@ process merge_parquets_to_dataset {
     mkdir $prefix
     cp to_merge/part*.parquet  $prefix/
     """
-
 }
