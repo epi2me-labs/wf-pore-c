@@ -21,6 +21,5 @@ dependencies:
   - whatshap>=1.6
   - mosdepth
   - d4tools
-  - picard
   - pip:
-      - "git+ssh://git@git.oxfordnanolabs.local/eharrington/pore-c2.git@0.7.0#egg=pore-c2"
+      - "git+ssh://git@git.oxfordnanolabs.local/eharrington/pore-c2.git@0.7.1#egg=pore-c2"

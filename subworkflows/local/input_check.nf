@@ -5,11 +5,11 @@ process chunk_ubam {
     tuple val(meta), path(ubam)
     val chunk_size
     output:
-    tuple val(meta), path("batches/shard_*.bam")
+    tuple val(meta), path("batches/shard*.bam")
     shell:
     """
     mkdir batches
-    picard SplitSamByNumberOfReads I=$ubam OUTPUT=batches SPLIT_TO_N_READS=$chunk_size
+    pore-c2 utils create-chunked-ubam $ubam batches/shard $chunk_size
     """
 }
 
