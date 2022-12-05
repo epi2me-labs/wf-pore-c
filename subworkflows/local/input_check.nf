@@ -7,9 +7,10 @@ process chunk_ubam {
     output:
     tuple val(meta), path("batches/shard*.bam")
     shell:
+    args = task.ext.args ?: " "
     """
     mkdir batches
-    pore-c2 utils create-chunked-ubam $ubam batches/shard $chunk_size
+    pore-c2 utils create-chunked-ubam $ubam batches/shard $chunk_size $args
     """
 }
 

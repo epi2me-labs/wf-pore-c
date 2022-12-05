@@ -17,9 +17,9 @@ dependencies:
   - minimap2>=2.24
   - pairtools>=1.0.1
   - cooler>0.8.0
-  - samtools*
+  - samtools==1.16.*
   - whatshap>=1.6
   - mosdepth
   - d4tools
   - pip:
-      - "git+ssh://git@git.oxfordnanolabs.local/eharrington/pore-c2.git@0.7.1#egg=pore-c2"
+      - "git+ssh://git@git.oxfordnanolabs.local/eharrington/pore-c2.git@0.7.2#egg=pore-c2"
