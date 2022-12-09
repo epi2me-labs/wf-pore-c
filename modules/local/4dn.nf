@@ -46,6 +46,17 @@ process merge_pairs_stats {
 }
 
 
+process pair_stats_report {
+    input: tuple val(meta), path("pairs.stats.txt")
+    output: tuple val(meta), path("${prefix}.pairs.stats.html")
+    shell:
+    prefix = task.ext.prefix ?: "${meta.sample_id}"
+    """
+    create_pairs_report.py pairs.stats.txt ${prefix}.pairs.stats.html
+    """
+}
+
+
 process create_restriction_bed {
     input: tuple val(enzyme), path(fasta), path(fai)
     output: tuple val(enzyme), path(fai), path("${fasta.baseName}.${enzyme}.fragments.bed")

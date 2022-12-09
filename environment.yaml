@@ -19,7 +19,13 @@ dependencies:
   - cooler>0.8.0
   - samtools==1.16.*
   - whatshap>=1.6
+  # coverage
   - mosdepth
   - d4tools
+  # reports
+  - typer
+  - panel
+  - hvplot
+  - pandas
   - pip:
       - "git+ssh://git@git.oxfordnanolabs.local/eharrington/pore-c2.git@0.7.2#egg=pore-c2"

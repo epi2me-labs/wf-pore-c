@@ -27,6 +27,7 @@ include {
    merge_pairs
    merge_pairs_stats
    create_restriction_bed
+   pair_stats_report
 } from './modules/local/4dn'
 
 
@@ -171,6 +172,10 @@ workflow POREC {
                 pairs_stats = merge_pairs_stats(
                     pair_chunks.stats.groupTuple()
                 )
+                pairs_report = pair_stats_report(
+                    pairs_stats
+                )
+                //pairs_report.view()
             }
         }
         /// CHROMUNITY
