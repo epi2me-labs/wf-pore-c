@@ -1,51 +1,61 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema",
     "$id": "https://raw.githubusercontent.com/./master/nextflow_schema.json",
-    "title": "epi2me-labs/wf-template",
-    "description": "Nextflow workflow template repository.",
-    "url": "https://github.com/epi2me-labs/wf-template",
+    "title": "epi2me-labs/wf-pore-c",
+    "description": "Workflow for analysing Pore-c data.",
+    "url": "https://github.com/epi2me-labs/wf-porec",
     "type": "object",
     "definitions": {
-        "basic_input_output_options": {
-            "title": "Basic Input/Output Options",
+        "input_options": {
+            "title": "Input Options",
             "type": "object",
             "fa_icon": "fas fa-terminal",
-            "description": "Define where the pipeline should find input data and save output data.",
+            "description": "Parameters for finding and handling input data for analysis.",
             "properties": {
-                "out_dir": {
+                "ubam": {
                     "type": "string",
-                    "default": "output",
-                    "format": "directory-path",
-                    "description": "Directory for output of all user-facing files."
+                    "format": "file-path",
+                    "description": "An unaligned bam file or containing Pore-C concatemer sequences"
                 },
                 "ref": {
                     "type": "string",
                     "format": "file-path",
                     "description": "A fasta file containing the reference genome to map against"
                 },
-                "sample_sheet": {
-                    "type": "string",
-                    "format": "file-path",
-                    "description": "An optional sample sheet (see test_data/sample_sheet.csv). If provided then the ubam,vcf,sample and cutter parameters are ignored"
-                },
-                "ubam": {
-                    "type": "string",
-                    "format": "file-path",
-                    "description": "An unaligned bam file or containing Pore-C concatemer sequences"
-                },
                 "vcf": {
                     "type": "string",
                     "format": "file-path",
                     "description": "An optional phased VCF file that will be used to haplotag alignments"
                 },
-                "sample": {
-                    "type": "string",
-                    "description": "A sample name for non-multiplexed data. Permissible if passing a file or directory of .ubam(.gz)."
-                },
                 "cutter": {
                     "type": "string",
                     "description": "The enzyme used in the restriction digest"
-                },
+                }
+            },
+            "required": [
+                "ref"
+            ]
+        },
+        "output_options": {
+            "title": "Output Options",
+            "type": "object",
+            "description": "Parameters for saving and naming workflow outputs.",
+            "default": "",
+            "properties": {
+                "out_dir": {
+                    "type": "string",
+                    "default": "output",
+                    "format": "directory-path",
+                    "description": "Directory for output of all user-facing files."
+                }
+            }
+        },
+        "advanced_options": {
+            "title": "Advanced Options",
+            "type": "object",
+            "description": "Avanced options for configuring processes inside the workflow.",
+            "default": "",
+            "properties": {
                 "chunk_size": {
                     "type": "integer",
                     "default": -1,
@@ -72,10 +82,10 @@
                     "description": "Set max number of threads to use for uncompressing uBAM and generating FASTQ for alignment (limited by config executor cpus)"
                 }
             },
-            "required": ["ref"]
+            "help_text": "These advanced options do not need to be changed for typical use, but allow fine tuning of workflows for users who want more control over the workflow."
         },
-        "porec": {
-            "title": "Pore-C Tools",
+        "pore_c_tools_options": {
+            "title": "Pore-C Tools Options",
             "type": "object",
             "description": "Parameters to control the pore-c tools",
             "properties": {
@@ -86,41 +96,38 @@
                 },
                 "coverage": {
                     "type": "boolean",
-                    "default": "false",
                     "description": "Calculate restriction-fragment coverage using mosdepth"
                 }
             }
         },
-        "chromunity": {
-            "title": "Chromunity",
+        "chromunity_options": {
+            "title": "Chromunity Options",
             "type": "object",
             "description": "Create files for Chromunity analyses",
             "properties": {
                 "chromunity": {
                     "type": "boolean",
-                    "default": "false",
+                    "default": false,
                     "description": "Create parquet files for Chromunity"
                 },
                 "chromunity_merge_distance": {
                     "type": "integer",
-                    "default": null,
+                    "default": -1,
                     "description": "Merge colinear alignments separated by less than this distance into a single monomer"
                 }
             }
         },
-        "4DN": {
-            "title": "4DN files",
+        "4dn_files_options": {
+            "title": "4DN files Options",
             "type": "object",
             "description": "Create files for the 4D nucleome toolset",
             "properties": {
                 "pairs": {
                     "type": "boolean",
-                    "default": "false",
                     "description": "Create a 4DN-format pairs file (also calculate stats)."
                 },
                 "mcool": {
                     "type": "boolean",
-                    "default": "false",
                     "description": "Create a multi-resolution cooler file"
                 },
                 "cool_bin_size": {
@@ -135,71 +142,70 @@
                 }
             }
         },
-        "Pair-end BAM files": {
-            "title": "Paired-end BAM",
+        "paired_end_bam_options": {
+            "title": "Paired-end BAM Options",
             "type": "object",
             "description": "Create mock paired-end BAM files for legacy tools",
             "properties": {
                 "paired_end": {
                     "type": "boolean",
-                    "default": "false",
                     "description": "Create mock paired-end BAM files."
                 },
                 "paired_end_minimum_distance": {
                     "type": "integer",
-                    "default": null,
+                    "default": -1,
                     "description": "Remove trans pairs and cis- pairs separated by a distance shorter than this"
                 },
                 "paired_end_maximum_distance": {
                     "type": "integer",
-                    "default": null,
+                    "default": -1,
                     "description": "Remove trans pairs and cis- pairs separated by a distance greater than this"
                 }
             }
         },
-        "meta_data": {
-            "title": "Meta Data",
+        "misc": {
+            "title": "Misc",
             "type": "object",
             "description": "",
             "default": "",
-            "properties": {
-                "report_name": {
-                    "type": "string",
-                    "default": "report",
-                    "description": "Output report filename suffix."
-                },
-                "disable_ping": {
-                    "type": "boolean",
-                    "default": "false",
-                    "description": "Enable to prevent sending a workflow ping."
-                }
-            }
-        },
-        "generic_options": {
-            "title": "Generic options",
-            "type": "object",
-            "fa_icon": "far fa-question-circle",
-            "description": "Less common options for the pipeline, typically set in a config file.",
-            "help_text": "These options are common to all nf-core pipelines and allow you to customise some of the core preferences for how the pipeline runs.\n\nTypically these options would be set in a Nextflow config file loaded for all pipeline runs, such as `~/.nextflow/config`.",
             "properties": {
                 "help": {
                     "type": "boolean",
                     "description": "Display help text.",
                     "fa_icon": "fas fa-question-circle",
                     "hidden": true
+                },
+                "disable_ping": {
+                    "type": "boolean",
+                    "description": "Enable to prevent sending a workflow ping."
                 }
             }
         }
     },
     "allOf": [
         {
-            "$ref": "#/definitions/basic_input_output_options"
+            "$ref": "#/definitions/input_options"
         },
         {
-            "$ref": "#/definitions/meta_data"
+            "$ref": "#/definitions/output_options"
         },
         {
-            "$ref": "#/definitions/generic_options"
+            "$ref": "#/definitions/advanced_options"
+        },
+        {
+            "$ref": "#/definitions/pore_c_tools_options"
+        },
+        {
+            "$ref": "#/definitions/chromunity_options"
+        },
+        {
+            "$ref": "#/definitions/4dn_files_options"
+        },
+        {
+            "$ref": "#/definitions/paired_end_bam_options"
+        },
+        {
+            "$ref": "#/definitions/misc"
         }
     ],
     "properties": {
@@ -207,7 +213,7 @@
             "type": "string",
             "description": "The main process label for template processes to use by default",
             "hidden": true,
-            "default": "wf-template"
+            "default": "wf-porec"
         },
         "aws_image_prefix": {
             "type": "string",
@@ -215,11 +221,6 @@
         },
         "aws_queue": {
             "type": "string",
-            "hidden": true
-        },
-        "wfversion": {
-            "type": "string",
-            "default": "v0.2.0",
             "hidden": true
         },
         "monochrome_logs": {
@@ -231,10 +232,17 @@
         },
         "show_hidden_params": {
             "type": "boolean"
+        },
+        "version": {
+            "type": "boolean"
+        },
+        "sample_id": {
+            "type": "string",
+            "default": "None"
         }
     },
     "docs": {
         "intro": "## Introduction\n\nThis section of documentation typically contains an overview of the workflow in terms of motivation\nand bioinformatics methods, listing any key tools or algorithms employed, whilst also describing its\nrange of use-cases and what a suitable input dataset should look like.\n\n",
-        "links": "## Useful links\n\n* [nextflow](https://www.nextflow.io/)\n* [docker](https://www.docker.com/products/docker-desktop)\n* [conda](https://docs.conda.io/en/latest/miniconda.html)\n"
+        "links": "## Useful links\n\n* [nextflow](https://www.nextflow.io/)\n* [docker](https://www.docker.com/products/docker-desktop)\n"
     }
 }
