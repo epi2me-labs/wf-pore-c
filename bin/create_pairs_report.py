@@ -1,10 +1,9 @@
 #!/usr/bin/env python
+"""Create pairs report."""
 
 from collections import defaultdict
-from pathlib import Path
-from typing import *
+from typing import List, Tuple
 
-import hvplot.pandas
 import pandas as pd
 import panel as pn
 import typer
@@ -26,7 +25,7 @@ ORI_NAMES = dict(zip(["+-", "-+", "++", "--"], ["Inner", "Outer", "Right", "Left
 
 # %%
 def _parse_totals_table(data=List[Tuple[str, str]]):
-
+    """Parse totals table."""
     res = []
     total = 0
     for key, val in data:
@@ -55,6 +54,7 @@ def _parse_totals_table(data=List[Tuple[str, str]]):
 
 
 def _parse_pair_types(data=List[Tuple[str, str]]):
+    """Parse pair types."""
     res = []
     for code, val in data:
         left, right = code[0], code[1]
@@ -66,6 +66,7 @@ def _parse_pair_types(data=List[Tuple[str, str]]):
 
 
 def _parse_chrom_freq(data=List[Tuple[str, str]]):
+    """Parse chrom freq."""
     res = []
     for code, val in data:
         chr1, chr2 = code.split("/")
@@ -82,6 +83,7 @@ def _parse_chrom_freq(data=List[Tuple[str, str]]):
 
 
 def _parse_summary(data=List[Tuple[str, str]]):
+    """Parse summary."""
     res = []
     for key, val in data:
         res.append({"statistic": key, "value": float(val)})
@@ -89,6 +91,7 @@ def _parse_summary(data=List[Tuple[str, str]]):
 
 
 def _parse_dist_freq(data=List[Tuple[str, str]]):
+    """Parse dist freq."""
     res = []
     for key, val in data:
         interval, ori = key.split("/")
@@ -106,14 +109,15 @@ def _parse_dist_freq(data=List[Tuple[str, str]]):
     return res
 
 
-def read_pairs_stats(path: Path):
+def read_pairs_stats(path):
+    """Read Pairs stats."""
     _data = defaultdict(list)
-    for l in path.open():
-        if "/" not in l:
+    for i in path.open():
+        if "/" not in i:
             table = "totals"
         else:
-            table, l = l.split("/", 1)
-        _data[table].append(tuple(l.strip().split("\t")))
+            table, i = i.split("/", 1)
+        _data[table].append(tuple(i.strip().split("\t")))
     totals = _parse_totals_table(_data["totals"])
     pair_types = _parse_pair_types(_data["pair_types"])
     chrom_freq = _parse_chrom_freq(_data["chrom_freq"])
@@ -122,13 +126,14 @@ def read_pairs_stats(path: Path):
     return totals, pair_types, chrom_freq, summary, dist_freq
 
 
-def main(pair_stats: Path, report_html: Path, show_chroms: Optional[List[str]] = None):
-    totals, pair_types, chrom_freq, summary, dist_freq = read_pairs_stats(pair_stats)
-
-
+def main(pair_stats, report_html, show_chroms=None):
+    """Entry point."""
+    totals, pair_types, chrom_freq, summary, dist_freq = read_pairs_stats(
+        pair_stats)
     totals_pane = pn.Column(
         pn.Row(
-            pn.pane.DataFrame(totals.set_index(["Section", "Type"]), width=600),
+            pn.pane.DataFrame(totals.set_index(
+                ["Section", "Type"]), width=600),
             totals.query("Section == 'mapping'").hvplot.bar(
                 x="Section",
                 y="Perc. of Total",
@@ -140,7 +145,8 @@ def main(pair_stats: Path, report_html: Path, show_chroms: Optional[List[str]] =
             ),
         ),
         totals.query("Section == 'distance'").hvplot.bar(
-            x="Type", y="Perc. of Section", title="Genomic Distance Distribution"
+            x="Type", y="Perc. of Section",
+            title="Genomic Distance Distribution"
         ),
     )
 
@@ -176,7 +182,8 @@ def main(pair_stats: Path, report_html: Path, show_chroms: Optional[List[str]] =
     )
 
     distance_pane = pn.Row(
-        dist_freq.hvplot.line(x="bin_right", by="ori_name", y="count", logx=True)
+        dist_freq.hvplot.line(
+            x="bin_right", by="ori_name", y="count", logx=True)
     )
 
     report = pn.Tabs(

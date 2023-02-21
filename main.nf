@@ -6,7 +6,6 @@ include {
     index_ref_fai
     decompress_ref
     publish_artifact
-    chunk_ubam
     merge_namesorted_bams
     merge_namesorted_bams as merge_paired_end_bams
     merge_coordsorted_bams
@@ -63,7 +62,6 @@ workflow POREC {
             .set{ch_mapping}
         // map monomers against ref genome and add pore-c specific tags
         ch_annotated_monomers  = map_monomers(ch_mapping) | annotate_monomers
-
         // create a fork for samples that have phase info available
         ch_annotated_monomers.cs_bam
             .branch{
@@ -71,7 +69,6 @@ workflow POREC {
                 no_haplotag: it[0].vcf == null
             }
             .set { haplotag_fork }
-
         // haplotag bams when we have VCF available
         (haplotag_fork
             .to_haplotag  // [meta, bam bai]
