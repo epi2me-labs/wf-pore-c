@@ -14,36 +14,9 @@ variables:
     NF_IGNORE_PROCESSES: "chunk_ubam"
     CI_FLAVOUR: "new"
 
-aws-run:
-    artifacts:
-        when: always
-        paths:
-            - ${CI_PROJECT_NAME}
-            - .nextflow.log
-        exclude: [] # give me everything pal
-    allow_failure: true
 
-
-docker-run:
-
-    # Remove this directive in downstream templates
-    tags: [] # no need for big ram
-
-    # Define a 1D job matrix to inject a variable named MATRIX_NAME into
-    #   the CI environment, we can use the value of MATRIX_NAME to determine
-    #   which options to apply as part of the rules block below
-    # NOTE There is a slightly cleaner way to define this matrix to include
-    #   the variables, but it is broken when using long strings! See CW-756
-    parallel:
-        matrix:
-            - MATRIX_NAME: [
-                "pore-c"
-            ]
-    rules:
-     - if: ($CI_COMMIT_BRANCH == null || $CI_COMMIT_BRANCH == "dev-template")
-       when: never
-     - if: $MATRIX_NAME == "pore-c"
-       variables:
-          NF_PROCESS_FILES: "subworkflows/local/input_check.nf"
-          NF_WORKFLOW_OPTS: "--ubam test_data/porec_test.concatemers.bam --ref test_data/porec_test.fasta --phased_vcf test_data/porec_test.phased_variants.vcf.gz --mcool_resolutions 10,20,30 --cutter NlaIII --vcf test_data/porec_test.phased_variants.vcf.gz"
-          NF_IGNORE_PROCESSES: "chunk_ubam"
+macos-run:
+    tags:
+        - macos
+        - x86
+        - oxford
