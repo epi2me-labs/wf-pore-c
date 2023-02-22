@@ -7,7 +7,7 @@ process to_pairs_file {
     input:
         tuple val(meta), path("monomers.mm2.ns.bam"), path("fasta.fai"), path("fragments.bed")
     output:
-        tuple val(meta), path(fai), path("${meta.sample_id}.pairs.gz"), emit: "pairs"
+        tuple val(meta), path("fasta.fai"), path("${meta.sample_id}.pairs.gz"), emit: "pairs"
         tuple val(meta), path("${meta.sample_id}.stats.txt"), emit: "stats"
     shell:
         def args = task.ext.args ?: "--drop-sam --drop-seq --expand --add-pair-index --add-columns mapq,pos5,pos3,cigar,read_len,matched_bp,algn_ref_span,algn_read_span,dist_to_5,dist_to_3,mismatches"
@@ -15,7 +15,9 @@ process to_pairs_file {
     pairtools parse2  \
     --output-stats "${meta.sample_id}.stats.txt" \
     -c "fasta.fai" --single-end --readid-transform 'readID.split(":")[0]'  \
-    $args "monomers.mm2.ns.bam" | pairtools restrict  -f "fragments.bed" -o "${meta.sample_id}.pairs.gz"
+    $args "monomers.mm2.ns.bam" > extract_pairs.tmp
+    pairtools restrict  -f "fragments.bed" -o "${meta.sample_id}.pairs.gz" extract_pairs.tmp
+    rm -rf extract_pairs.tmp
     """
 }
 
@@ -65,11 +67,11 @@ process create_restriction_bed {
     input:
         tuple val(enzyme), path("reference.fasta"), path("reference.fasta.fai")
     output:
-        tuple val(enzyme), path(fai), path("${fasta.baseName}.${enzyme}.fragments.bed")
+        tuple val(enzyme), path("reference.fasta.fai"), path("fragments.bed")
     shell:
         def args = task.ext.args ?: " "
     """
-    cooler digest -o "${fasta.baseName}.${enzyme}.fragments.bed" $args "reference.fasta.fai" "reference.fasta" $enzyme
+    cooler digest -o "fragments.bed" $args "reference.fasta.fai" "reference.fasta"  $enzyme
     """
 }
 
@@ -99,4 +101,3 @@ process merge_mcools {
     cooler zoomify -r ${resolutions} -o ${prefix}.mcool  ${prefix}.cool
     """
 }
-

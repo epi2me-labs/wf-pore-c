@@ -7,6 +7,7 @@ from typing import List, Tuple
 import pandas as pd
 import panel as pn
 import typer
+import hvplot.pandas  # noqa
 
 pn.extension()
 
@@ -112,12 +113,13 @@ def _parse_dist_freq(data=List[Tuple[str, str]]):
 def read_pairs_stats(path):
     """Read Pairs stats."""
     _data = defaultdict(list)
-    for i in path.open():
-        if "/" not in i:
-            table = "totals"
-        else:
-            table, i = i.split("/", 1)
-        _data[table].append(tuple(i.strip().split("\t")))
+    with open(path) as f:
+        for i in f:
+            if "/" not in i:
+                table = "totals"
+            else:
+                table, i = i.split("/", 1)
+            _data[table].append(tuple(i.strip().split("\t")))
     totals = _parse_totals_table(_data["totals"])
     pair_types = _parse_pair_types(_data["pair_types"])
     chrom_freq = _parse_chrom_freq(_data["chrom_freq"])
