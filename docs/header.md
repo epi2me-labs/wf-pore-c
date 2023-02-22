@@ -1,7 +1,4 @@
-# Workflow template
+# Workflow Pore-C
 
 This repository contains a [nextflow](https://www.nextflow.io/) workflow
-template that can be used as the basis for creating new workflows.
-
-> This workflow is not intended to be used by end users.
-
+to convert data generated with the [Pore-C](https://nanoporetech.com/resource-centre/porec) protocol to outputs in a variety of standard file formats used by downstream tools.

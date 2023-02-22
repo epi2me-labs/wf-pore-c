@@ -1,16 +1,14 @@
-# Workflow template
+# Workflow Pore-C
 
 This repository contains a [nextflow](https://www.nextflow.io/) workflow
-template that can be used as the basis for creating new workflows.
-
-> This workflow is not intended to be used by end users.
-
+to convert data generated with the [Pore-C](https://nanoporetech.com/resource-centre/porec) protocol to outputs in a variety of standard file formats used by downstream tools.
 ## Introduction
 
-This section of documentation typically contains an overview of the workflow in terms of motivation
-and bioinformatics methods, listing any key tools or algorithms employed, whilst also describing its
-range of use-cases and what a suitable input dataset should look like.
+Pore-C is an end-to-end workflow unique to Oxford Nanopore which combines chromatin conformation capture (3C) with direct, long nanopore sequencing reads. With nanopore reads, long-range, multi-way contact information can be obtained.  Pore-C can be used to scaffold and improve the quality of existing genome assemblies to generate chromosome-scale assemblies, discover unique insights into the higher-order genome organisation of a species of interest, and reveal epigenetic information for a more comprehensive understanding of gene regulation. Find out more about the workflow [here](https://nanoporetech.com/about-us/news/pore-c-complete-end-end-workflow-chromatin-conformation-capture-published-nature)
 
+This nextflow workflow will create virtual digests of the genome using the [pore-c-py package](https://github.com/epi2me-labs/pore-c-py), align the resulting monomers against a reference genome with [minimap2](https://github.com/lh3/minimap2) and then filter spurious alignments, detect ligation junctions and assign fragments. The resulting BAM alignment file can be used with downstream tools. 
+
+Optionally the workflow can output a [pairs format](https://github.com/4dn-dcic/pairix/blob/master/pairs_format_specification.md) report which uses [pairtools](https://github.com/open2c/pairtools).
 ## Quickstart
 
 The workflow uses [nextflow](https://www.nextflow.io/) to manage compute and 
@@ -31,7 +29,7 @@ For more information on running EPI2ME Labs workflows [visit our website](https:
 To obtain the workflow, having installed `nextflow`, users can run:
 
 ```
-nextflow run epi2me-labs/wf-template --help
+nextflow run epi2me-labs/wf-pore-c --help
 ```
 
 to see the options for the workflow.
@@ -40,10 +38,23 @@ to see the options for the workflow.
 
 The primary outputs of the workflow include:
 
-* a simple text file providing a summary of sequencing reads,
-* an HTML report document detailing the primary findings of the workflow.
+* Coordinate sorted Bam and index
+* Name sorted Bam
+  
+Optional outputs
+* 4DN-format pairs file
 
 ## Useful links
 
 * [nextflow](https://www.nextflow.io/)
 * [docker](https://www.docker.com/products/docker-desktop)
+* [pore-c-py](https://github.com/epi2me-labs/pore-c-py)
+* [minimap2](https://github.com/lh3/minimap2)
+* [pairtools](https://github.com/open2c/pairtools)
+* [Pore-C](https://nanoporetech.com/resource-centre/porec): multi-contact, chromosome conformation capture for both genome-wide and targeted analyses.
+* Visit the [Nanopore Community](https://community.nanoporetech.com/info_sheets/restriction-enzyme-pore-c/v/rpc_s1015_v1_revf_12nov2019) for guidance through every step of the Pore-C workflow. Optimised Nanopore workflows have been developed: blood samples, [plants](https://nanoporetech.com/sites/default/files/s3/literature/plant-pore-c-workflow.pdf), and cell culture, animal, or insect tissues – the method is simple and scalable.
+
+
+### References
+
+Deshpande, A.S., Ulahannan, N., Pendleton, M. et al. Identifying synergistic high-order 3D chromatin conformations from genome-scale nanopore concatemer sequencing. Nat Biotechnol (2022). https://doi.org/10.1038/s41587-022-01289-z: https://www.nature.com/articles/s41587-022-01289-z  

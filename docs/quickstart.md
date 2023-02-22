@@ -18,7 +18,7 @@ For more information on running EPI2ME Labs workflows [visit our website](https:
 To obtain the workflow, having installed `nextflow`, users can run:
 
 ```
-nextflow run epi2me-labs/wf-template --help
+nextflow run epi2me-labs/wf-pore-c --help
 ```
 
 to see the options for the workflow.
@@ -27,6 +27,9 @@ to see the options for the workflow.
 
 The primary outputs of the workflow include:
 
-* a simple text file providing a summary of sequencing reads,
-* an HTML report document detailing the primary findings of the workflow.
+* Coordinate sorted Bam and index
+* Name sorted Bam
+  
+Optional outputs
+* 4DN-format pairs file
 
