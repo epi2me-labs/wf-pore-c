@@ -162,6 +162,7 @@ def main(pair_stats, report_html, show_chroms=None):
     if not show_chroms:
         show_chroms = chrom_freq.columns
 
+    chrom_freq = chrom_freq.reindex(columns=show_chroms, fill_value=0)
     chrom_contact_pane = pn.Row(
         chrom_freq.loc[show_chroms, show_chroms].hvplot.heatmap(
             width=600,
