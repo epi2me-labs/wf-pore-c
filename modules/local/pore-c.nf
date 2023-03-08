@@ -1,79 +1,60 @@
-process digest_concatemers {
+process digest_align_annotate {
+    errorStrategy = 'retry'
+    maxRetries 3
+    maxForks 10
     label 'wfporec'
     input:
-        tuple val(meta), path("concatemers.bam")
-    output:
-        tuple val(meta), path("${meta.sample_id}.monomers.bam")
-    script:
-        args = task.ext.args ?: " "
-    """
-    pore-c-py digest "concatemers.bam" "${meta.cutter}" "${meta.sample_id}.monomers.bam" $args
-    """
-}
-
-
-process minimap2_ubam_namesort {
-    label 'wfporec'
-    cpus {params.ubam_map_threads + params.ubam_sort_threads + params.ubam_bam2fq_threads}
-    input:
-        tuple val(meta),
-              path("concatermers.monomers.bam"),
-              path("reference.fasta.mmi"),
+        tuple val(meta), path("concatemers.bam"), path("reference.fasta.mmi"),
               val(minimap2_settings)
     output:
-        tuple val(meta), path("${meta.sample_id}.mm2.bam")
-    script:
-    """
-    samtools fastq --threads ${params.ubam_bam2fq_threads} -T '*' "concatermers.monomers.bam" |
-    minimap2 -ay -t ${params.ubam_map_threads}  ${minimap2_settings} "reference.fasta.mmi" - |
-    samtools sort --threads ${params.ubam_sort_threads} -n -o "${meta.sample_id}.mm2.bam"
-    """
-}
-
-process annotate_monomers {
-    label 'wfporec'
-    input:
-        tuple val(meta), path("concatemers.mm2.bam")
-    output:
         tuple val(meta),
-            path("annotated/${meta.sample_id}.ns.bam"),
+            path("${meta.sample_id}_out.ns.bam"),
             emit: ns_bam
         tuple val(meta),
-            path("annotated/${meta.sample_id}.cs.bam"),
-            path("annotated/${meta.sample_id}.cs.bam.csi"),
+            path("${meta.sample_id}.cs.bam"),
+            path("${meta.sample_id}.cs.bam.csi"),
             emit: cs_bam
         tuple val(meta),
-            path("annotated/${meta.sample_id}.chromunity.parquet"),
+            path("${meta.sample_id}.chromunity.parquet"),
             emit: chromunity_pq, optional: true
         tuple val(meta),
-            path("annotated/${meta.sample_id}.pe.bam"),
+            path("${meta.sample_id}.pe.bam"),
             emit: paired_end_bam, optional: true
     script:
         args = task.ext.args ?: " "
         if (params.chromunity) {
             args += "--chromunity "
             if (params.chromunity_merge_distance != null) {
-                args += "--chromunity-merge-distance ${params.chromunity_merge_distance} "
+                args += "--chromunity_merge_distance ${params.chromunity_merge_distance} "
             }
         }
         if (params.paired_end) {
-            args += "--paired-end "
-            if (params.paired_end_minimum_distance != null) {
-                args += "--paired-end-minimum-distance ${params.paired_end_minimum_distance} "
-            }
-            if (params.paired_end_maximum_distance != null) {
-                args += "--paired-end-maximum-distance ${params.paired_end_maximum_distance} "
+            args += "--paired_end "
+            if (params.filter_pairs) {
+                args += "--filter_pairs "
+                if (params.paired_end_minimum_distance != null) {
+                    args += "--paired_end_minimum_distance ${params.paired_end_minimum_distance} "
+                }
+                if (params.paired_end_maximum_distance != null) {
+                    args += "--paired_end_maximum_distance ${params.paired_end_maximum_distance} "
+                }
             }
         }
         if (params.summary) {
             args  += "--summary "
         }
         test_task = task.ext.suffix
-        //test_task_prefix = task.ext.prefix
     """
-    mkdir annotated
-    pore-c-py parse-bam "concatemers.mm2.bam" "annotated/${meta.sample_id}" $args
-    samtools sort --write-index -o "annotated/${meta.sample_id}.cs.bam" "annotated/${meta.sample_id}.ns.bam"
+    pore-c-py digest "concatemers.bam" "${meta.cutter}" \
+    --threads ${params.digest_annotate_threads} |
+    samtools fastq --threads 1 -T '*'  |
+    minimap2 -ay -t ${params.ubam_map_threads} ${minimap2_settings} \
+    "reference.fasta.mmi" - |
+    pore-c-py annotate - "${meta.sample_id}" --monomers \
+    --threads ${params.digest_annotate_threads}  --stdout true ${args}|
+    tee "${meta.sample_id}_out.ns.bam" |
+    samtools sort -m 1G --threads ${params.digest_annotate_threads}  -u --write-index -o "${meta.sample_id}.cs.bam" - 
+    
     """
 }
 

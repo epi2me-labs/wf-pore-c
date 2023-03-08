@@ -13,10 +13,8 @@ include {
 } from './modules/local/common'
 
 include {
-    digest_concatemers
-    minimap2_ubam_namesort as map_monomers
+    digest_align_annotate
     haplotagReads as haplotag_alignments
-    annotate_monomers
     merge_parquets_to_dataset
 } from './modules/local/pore-c'
 include {
@@ -46,22 +44,14 @@ workflow POREC {
         check_input(
             params.chunk_size
         ).set { ch_chunks }  // [meta, ubam_chunk]
-
+        
         // scalar channel of genome files.
         ref = prepare_genome(params.ref, params.minimap2_settings)
-
+        
        /// RUN PORE-C TOOLS ///
-        // digest concatemers into monomers
-        ch_monomers = digest_concatemers(ch_chunks)
-        ch_monomers
-            .combine(ref.mmi)
-            .combine(ref.minimap2_settings)
-            .map{     // meta, ubam, mmi, minimap2_settings
-                it -> [it[0], it[1], it[2], it[3]]
-            }
-            .set{ch_mapping}
-        // map monomers against ref genome and add pore-c specific tags
-        ch_annotated_monomers  = map_monomers(ch_mapping) | annotate_monomers
+        chunks_refs = ch_chunks.combine(ref.mmi).combine(ref.minimap2_settings)
+        ch_annotated_monomers = digest_align_annotate(chunks_refs)
+
         // create a fork for samples that have phase info available
         ch_annotated_monomers.cs_bam
             .branch{
