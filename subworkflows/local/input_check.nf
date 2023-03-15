@@ -11,7 +11,7 @@ process chunk_ubam {
         args = task.ext.args ?: " "
     """
     mkdir batches
-    pore-c-py utils create-chunked-ubam "concatemers.bam" batches/shard $chunk_size $args
+    pore-c-py chunk-bam "concatemers.bam" "batches/shard" --chunk_size $chunk_size $args
     """
 }
 
