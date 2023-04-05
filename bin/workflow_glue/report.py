@@ -1,10 +1,11 @@
 """Create workflow report."""
 import json
 
-from aplanat.components import fastcat
-from aplanat.components import simple as scomponents
-from aplanat.report import WFReport
-import pandas
+from ezcharts.components import fastcat
+from ezcharts.components.reports import labs
+from ezcharts.layout.snippets import Tabs
+from ezcharts.layout.snippets.table import DataTable
+import pandas as pd
 
 from .util import get_named_logger, wf_parser  # noqa: ABS101
 
@@ -12,32 +13,31 @@ from .util import get_named_logger, wf_parser  # noqa: ABS101
 def main(args):
     """Run the entry point."""
     logger = get_named_logger("Report")
-    report = WFReport(
-        "Workflow Template Sequencing report", "wf-template",
-        revision=args.revision, commit=args.commit)
+    report = labs.LabsReport(
+        "Workflow Pore C report", "wf-pore-c",
+        args.params, args.versions)
 
     with open(args.metadata) as metadata:
-        sample_details = [
+        sample_details = sorted([
             {
                 'sample': d['alias'],
                 'type': d['type'],
                 'barcode': d['barcode']
             } for d in json.load(metadata)
-        ]
+        ], key=lambda d: d["sample"])
 
     if args.stats:
-        report.add_section(section=fastcat.full_report(args.stats))
+        with report.add_section("Read summary", "Read summary"):
+            fastcat.SeqSummary(args.stats)
 
-    section = report.add_section()
-    section.markdown('## Samples')
-    section.table(pandas.DataFrame(sample_details))
+    with report.add_section("Metadata", "Metadata"):
+        tabs = Tabs()
+        for d in sample_details:
+            with tabs.add_tab(d["sample"]):
+                df = pd.DataFrame.from_dict(d, orient="index", columns=["Value"])
+                df.index.name = "Key"
+                DataTable.from_pandas(df)
 
-    report.add_section(
-        section=scomponents.version_table(args.versions))
-    report.add_section(
-        section=scomponents.params_table(args.params))
-
-    # write report
     report.write(args.report)
     logger.info(f"Report written to {args.report}.")
 
