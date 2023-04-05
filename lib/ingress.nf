@@ -265,30 +265,32 @@ process bamstats {
         val extra_args
         val input_type
     output:
-        tuple val(meta), path("bams"), path("bam_stats.txt")
+        tuple val(meta), path("bams"), path("bamstats")
     script:
-        extensions = "bam"
-        unmapped = ''
+        def unmapped = ''
         if (input_type == "ubam"){
-            extensions = "bam,ubam"
             unmapped = ' --unmapped'
-        }  
+        }
+        def sample_name = meta["alias"]
         """
+        mkdir bamstats
         if [ -d ${input} ]; then
-            samtools index -M ${input}/*.bam
-            bamstats ${extra_args} ${input}/*.bam | head -n +1 > bam_stats.txt;
-            for file in ${input}/*.bam; do
-                bamstats ${extra_args} ${unmapped} \$file | tail -n +2 >> bam_stats.txt
+            samtools index -M ${input}/*.*bam
+            bamstats ${extra_args} -s $sample_name ${input}/*.*bam | head -n +1 > bamstats/per-read-stats.tsv
+            for file in ${input}/*.*bam; do
+                bamstats ${extra_args} -s $sample_name ${unmapped} \$file | tail -n +2 >> bamstats/per-read-stats.tsv
             done
             mv ${input} bams;
         else
             samtools index -M ${input}
-            bamstats ${extra_args} ${unmapped} ${input} > bam_stats.txt
+            bamstats ${extra_args} -s $sample_name ${unmapped} ${input} > bamstats/per-read-stats.tsv
             mkdir bams
             mv ${input} bams
         fi
         """
 }
+
+
 /**
  * Parse input arguments for `ingress`.
  *

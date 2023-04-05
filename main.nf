@@ -45,6 +45,62 @@ process chunk_ubam {
     """
 }
 
+
+process getVersions {
+    label "wfporec"
+    cpus 1
+    output:
+        path "versions.txt"
+    script:
+    """
+    fastcat --version | sed 's/^/fastcat,/' >> versions.txt
+    mosdepth --version | sed 's/ /,/' >> versions.txt
+    pairtools --version | sed 's/\\<version\\>//g' >> versions.txt
+    whatshap --version | sed 's/^/whatshap,/' >> versions.txt
+    pore-c-py --version | sed 's/ /,/' >> versions.txt
+    samtools --version | (head -n 1 && exit 0) | sed 's/ /,/' >> versions.txt
+    """
+}
+
+
+process getParams {
+    label "wfporec"
+    cpus 1
+    output:
+        path "params.json"
+    script:
+        String paramsJSON = new JsonBuilder(params).toPrettyString()
+    """
+    # Output nextflow params object to JSON
+    echo '$paramsJSON' > params.json
+    """
+}
+
+
+process makeReport {
+    label "wfporec"
+    input:
+        val metadata
+        path "per_read_stats.tsv"
+        path "versions/*"
+        path "params.json"
+    output:
+        path "wf-pore-c-report.html"
+    script:
+        String report_name = "wf-pore-c-report.html"
+        String metadata = new JsonBuilder(metadata).toPrettyString()
+    """
+    echo '${metadata}' > metadata.json
+    workflow-glue report $report_name \
+        --metadata metadata.json \
+        --stats per_read_stats.tsv \
+        --versions versions \
+        --params params.json
+
+    """
+}
+
+
 // entrypointworkflow
 WorkflowMain.initialise(workflow, params, log)
 
@@ -73,7 +129,7 @@ workflow POREC {
         // create channel of input concatemers
         reads = sample_data.map{meta,bam,reads -> [meta, bam]}
         if (params.chunk_size > 0) {
-            reads = chunk_ubam(sample_data, channel.value(params.chunk_size)).transpose()
+            reads = chunk_ubam(reads, channel.value(params.chunk_size)).transpose()
         }
         if (params.params_sheet == null) {
             ch_chunks = reads.map{meta, bam ->
@@ -233,9 +289,23 @@ workflow POREC {
             )
         }
 
+        // Make a report
+        software_versions = getVersions()
+        workflow_params = getParams()
+        metadata = reads.map { it[0] }.toList()
+        per_read_stats = sample_data.map {
+            it[2] ? it[2].resolve('per-read-stats.tsv') : null
+        }
+        | collectFile ( keepHeader: true )
+
+        report = makeReport(
+            metadata, per_read_stats, software_versions, workflow_params
+        )
+
     emit:
         name_sorted_bam = ns_bam
         coord_sorted_bam = cs_bam
+        report = report
 }
 
 workflow {
