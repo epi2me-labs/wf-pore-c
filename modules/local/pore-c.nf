@@ -45,7 +45,7 @@ process digest_align_annotate {
         }
         test_task = task.ext.suffix
     """
-    pore-c-py digest "concatemers.bam" "${meta.cutter}" \
+    pore-c-py digest "concatemers.bam" "${meta.enzyme}" \
     --threads ${params.digest_annotate_threads} |
     samtools fastq --threads 1 -T '*'  |
     minimap2 -ay -t ${params.ubam_map_threads} ${minimap2_settings} \

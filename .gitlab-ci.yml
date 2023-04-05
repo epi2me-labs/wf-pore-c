@@ -9,13 +9,12 @@ variables:
     # The workflow should define `--out_dir`, the CI template sets this.
     # Only common file inputs and option values need to be given here
     # (not things such as -profile)
-    NF_PROCESS_FILES: "subworkflows/local/input_check.nf"
     NF_WORKFLOW_OPTS: "--ubam test_data/porec_test.concatemers.bam --chunk_size 1000 --ref \
     test_data/porec_test.fasta --phased_vcf test_data/porec_test.phased_variants.vcf.gz \
     --mcool_resolutions 10,20,30 --cutter NlaIII \
     --vcf test_data/porec_test.phased_variants.vcf.gz --pairs \
     --chromunity --paired_end --filter_pairs --paired_end_minimum_distance 100 \
-    --paired_end_maximum_distance 200"
+    --paired_end_maximum_distance 200 "
     NF_IGNORE_PROCESSES: "chunk_ubam"
     CI_FLAVOUR: "new"
 
@@ -24,3 +23,49 @@ macos-run:
         - macos
         - x86
         - oxford
+
+docker-run:
+    parallel:
+        matrix:
+            - MATRIX_NAME: [
+                "no-sample-sheet", "sample-sheet", "param-sheet", "fastq"]
+    rules:
+        - if: ($CI_COMMIT_BRANCH == null || $CI_COMMIT_BRANCH == "dev-template")
+          when: never
+        - if: $MATRIX_NAME == "no-sample-sheet"
+          variables:
+            NF_WORKFLOW_OPTS: "--ubam test_data/porec_test.concatemers.bam --chunk_size 100 --ref \
+            test_data/porec_test.fasta --phased_vcf test_data/porec_test.phased_variants.vcf.gz \
+            --mcool_resolutions 10,20,30 --cutter NlaIII \
+            --vcf test_data/porec_test.phased_variants.vcf.gz --pairs \
+            --chromunity --paired_end --filter_pairs --paired_end_minimum_distance 100 \
+            --paired_end_maximum_distance 200"
+            NF_IGNORE_PROCESSES: "chunk_ubam"
+        - if: $MATRIX_NAME == "sample-sheet"
+          variables:
+            NF_WORKFLOW_OPTS: "--ubam test_data/bams --ref \
+            test_data/porec_test.fasta  \
+            --mcool_resolutions 10,20,30 --cutter NlaIII \
+            --vcf test_data/porec_test.phased_variants.vcf.gz --pairs \
+            --chromunity --paired_end --filter_pairs --paired_end_minimum_distance 100 \
+            --paired_end_maximum_distance 200 --sample_sheet test_data/sample_sheet.csv"
+            NF_IGNORE_PROCESSES: "chunk_ubam" 
+        - if: $MATRIX_NAME == "param-sheet"
+          variables:
+            NF_WORKFLOW_OPTS: "--ubam test_data/bams --ref \
+            test_data/porec_test.fasta \
+            --mcool_resolutions 10,20,30 --cutter NlaIII \
+            --vcf test_data/porec_test.phased_variants.vcf.gz --pairs \
+            --chromunity --paired_end --filter_pairs --paired_end_minimum_distance 100 \
+            --paired_end_maximum_distance 200 --sample_sheet test_data/sample_sheet.csv \
+            --params_sheet test_data/param_sheet.csv"
+            NF_IGNORE_PROCESSES: "chunk_ubam"
+        - if: $MATRIX_NAME == "fastq"
+          variables:
+            NF_WORKFLOW_OPTS: "--fastq test_data/porec_test.concatemers.fastq --ref \
+            test_data/porec_test.fasta --phased_vcf test_data/porec_test.phased_variants.vcf.gz \
+            --mcool_resolutions 10,20,30 --cutter NlaIII \
+            --vcf test_data/porec_test.phased_variants.vcf.gz --pairs \
+            --chromunity --paired_end --filter_pairs --paired_end_minimum_distance 100 \
+            --paired_end_maximum_distance 200"
+            NF_IGNORE_PROCESSES: "chunk_ubam"

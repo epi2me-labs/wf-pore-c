@@ -2,98 +2,122 @@ import java.nio.file.NoSuchFileException
 
 import ArgumentParser
 
-EXTENSIONS = ["fastq", "fastq.gz", "fq", "fq.gz"]
+EXTENSIONS = [
+    fastq: ["fastq", "fastq.gz", "fq", "fq.gz"],
+    bam: ["bam"],
+    ubam: ["ubam", "bam"]
+]
 
 /**
  * Take a map of input arguments, find valid inputs, and return a channel
- * with elements of `[metamap, seqs.fastq.gz, path-to-fastcat-stats]`.
- * The last item is `null` if `fastcat` was not run. It is only run on directories
- * containing more than one FASTQ file or when `fastcat_stats: true`.
+ * with elements of `[metamap, seqs.fastq.gz or bam directory, path-to-stats]`.
+ * The last item is `null` if `stats` was not run. It is only run on directories
+ * containing more than one Input file or when `stats: true`.
  *
  * @param arguments: map with arguments containing
- *  - "input": path to either: (i) input FASTQ file, (ii) top-level directory containing
- *     FASTQ files, (iii) directory containing sub-directories which contain FASTQ
- *     files
+ *  - "input": path to either: (i) input file, (ii) top-level directory containing
+ *     FASTQ, bam or ubam files, (iii) directory containing 
+ *     sub-directories which contain files
  *  - "sample": string to name single sample
  *  - "sample_sheet": path to CSV sample sheet
  *  - "analyse_unclassified": boolean whether to keep unclassified reads
  *  - "fastcat_stats": boolean whether to write the `fastcat` stats
+ *  - "input_type": string of either "fastq", "bam", or "ubam".
  * @return Channel of `[Map(alias, barcode, type, ...), Path, Path|null]`.
+ *  If input type default fastq 
  *  The first element is a map with metadata, the second is the path to the
  *  `.fastq.gz` file with the (potentially concatenated) sequences and the third is
  *  the path to the directory with the fastcat statistics (or `null` if `fastcat`
  *  wasn't run).
+ *  If input type is bam or ubam
+ *  The first element is a map with metadata, the second is the path to the 
+ *  input Bam directory and the third is the bamstats file.
  */
-def fastq_ingress(Map arguments)
+def ingress(Map arguments)
 {
     // check arguments
     Map margs = parse_arguments(arguments)
+    // check input extensions
+    if (!EXTENSIONS.containsKey(margs["input_type"])) {
+        error "Input type needs to be one of ${EXTENSIONS.keySet()}"
+    }
+    ArrayList extensions = EXTENSIONS[margs["input_type"]]
     // define the channel for holding the inputs [metamap, input_path]. It will be
     // either filled by `watchPath` (only emitting files) or by the data of the three
-    // input types (single file or dir with fastq or subdirs with fastq).
+    // input types (single file or dir with file or subdirs with files).
     def ch_input
     // handle `watchPath` case
     if (margs["watch_path"]) {
-        ch_input = watch_path(margs)
+        ch_input = watch_path(margs, extensions)
     } else {
-        // create a channel with the inputs (single file / dir with fastq / subdirs
-        // with fastq)
-        ch_input = get_valid_inputs(margs)
+        // create a channel with the inputs (single file / dir with files / subdirs
+        // with files)
+        ch_input = get_valid_inputs(margs, extensions)
     }
     // `ch_input` might contain elements of `[metamap, null]` if there were entries in
-    // the sample sheet for which no FASTQ files were found. We put these into an extra
+    // the sample sheet for which no relevant files were found. We put these into an extra
     // channel and combine with the result channel before returning.
     ch_input = ch_input.branch { meta, path ->
         reads_found: path as boolean
         no_reads_found: true
     }
     def ch_result
+    // run fastcat only if fastq - else bamstats
     if (margs.fastcat_stats) {
         // run fastcat regardless of input type
-        ch_result = fastcat(ch_input.reads_found, margs["fastcat_extra_args"])
+        if (margs["input_type"] == "fastq"){
+            ch_result = fastcat(ch_input.reads_found, margs["fastcat_extra_args"])
+        } else{
+            ch_result = bamstats(ch_input.reads_found, margs["fastcat_extra_args"], margs["input_type"])
+        }
     } else {
         // the fastcat stats were not requested --> run fastcat only on directories with
-        // more than one FASTQ file (and not on single files or directories with a
+        // more than one relevant file (and not on single files or directories with a
         // single file)
-        def ch_branched = ch_input.reads_found.map {meta, path ->
-            // find directories with only a single FASTQ file and "unwrap" the file
+        def get_relevant_files = ch_input.reads_found.map {meta, path ->
+            // find directories with only a single relevant file and "unwrap" the file
             if (path.isDirectory()) {
-                List fq_files = get_fq_files_in_dir(path)
-                if (fq_files.size() == 1) {
-                    path = fq_files[0]
+                List relevant_files = get_files_in_dir(path, extensions)
+                if (relevant_files.size() == 1) {
+                    path = relevant_files[0]
                 }
             }
             [meta, path]
-        } .branch { meta, path ->
-            // now there can only be two cases:
-            // (i) single FASTQ file (pass to `move_or_compress` later)
-            // (ii) dir with multiple fastq files (pass to `fastcat` later)
-            single_file: path.isFile()
-            dir_with_fastq_files: true
-        }
-        // call the respective processes on both branches and return
-        ch_result = fastcat(
-            ch_branched.dir_with_fastq_files, margs["fastcat_extra_args"]
-        ).concat(
-            ch_branched.single_file | move_or_compress | map {
-                meta, path -> [meta, path, null]
+        } 
+        // if fastq call the respective processes on both branches and return
+        if (margs["input_type"] == "fastq"){
+            ch_branched_fastq = get_relevant_files.branch { meta, path ->
+                // now there can only be two cases:
+                // (i) single file (pass to `move_or_compress` if fastq later)
+                // (ii) dir with multiple files (pass to `fastcat` if fastq later)
+                single_file: path.isFile()
+                dir_with_relevant_files: true
             }
-        )
+            ch_result = fastcat(
+                ch_branched_fastq.dir_with_relevant_files, margs["fastcat_extra_args"]
+            ).concat(
+                ch_branched_fastq.single_file | move_or_compress | map {
+                    meta, path -> [meta, path, null]
+                }
+            )
+        }else {
+            ch_result =  get_relevant_files
+        }
     }
     return ch_result.concat(ch_input.no_reads_found.map { [*it, null] })
 }
 
 
 /**
- * Run `watchPath` on the input directory and return a channel [metamap, path-to-fastq].
+ * Run `watchPath` on the input directory and return a channel [metamap, path-to-files].
  * The meta data is taken from the sample sheet in case one was provided. Otherwise it
  * only contains the `alias` (either `margs["sample"]` or the name of the parent
  * directory of the file).
  *
  * @param margs: map with parsed input arguments
- * @return: Channel of [metamap, path-to-fastq]
+ * @return: Channel of [metamap, path-to-files]
  */
-def watch_path(Map margs) {
+def watch_path(Map margs, ArrayList extensions) {
     // we have two cases to consider: (i) files being generated in the top-level
     // directory and (ii) files being generated in sub-directories. If we find files of
     // both kinds, throw an error.
@@ -106,17 +130,17 @@ def watch_path(Map margs) {
     if (input.isFile()) {
         error "Input ($input) must be a directory when using `watch_path`."
     }
-    // get existing FASTQ files first (look for relevant files in the top-level dir and
+    // get existing files first (look for relevant files in the top-level dir and
     // all sub-dirs)
     def ch_existing_input = Channel.fromPath(input)
     | concat(Channel.fromPath("$input/*", type: 'dir'))
-    | map { get_fq_files_in_dir(it) }
+    | map { get_files_in_dir(it, extensions) }
     | flatten
     // now get channel with files found by `watchPath`
     def ch_watched = Channel.watchPath("$input/**").until { it.name.startsWith('STOP') }
-    // only keep FASTQ files
+    // only keep files with relevant extensions
     | filter {
-        for (ext in EXTENSIONS) {
+        for (ext in extensions) {
             if (it.name.endsWith(ext)) return true
         }
         return false
@@ -130,12 +154,12 @@ def watch_path(Map margs) {
     | map {
         String input_type = (it.parent == input) ? "top-level" : "sub-dir"
         if (prev_input_type && (input_type != prev_input_type)) {
-            error "`watchPath` found FASTQ files in the top-level directory " +
+            error "`watchPath` found ${margs["input_type"]} files in the top-level directory " +
                 "as well as in sub-directories."
         }
         // if file is in a sub-dir, make sure it's not a sub-sub-dir
         if ((input_type == "sub-dir") && (it.parent.parent != input)) {
-            error "`watchPath` found a FASTQ file more than one level of " +
+            error "`watchPath` found a ${margs["input_type"]}  file more than one level of " +
                 "sub-directories deep ('$it')."
         }
         // we also don't want files in the top-level dir when we got a sample sheet
@@ -233,10 +257,42 @@ process fastcat {
 }
 
 
+process bamstats {
+    label params.process_label
+    cpus params.threads
+    input:
+        tuple val(meta), path(input)
+        val extra_args
+        val input_type
+    output:
+        tuple val(meta), path("bams"), path("bam_stats.txt")
+    script:
+        extensions = "bam"
+        unmapped = ''
+        if (input_type == "ubam"){
+            extensions = "bam,ubam"
+            unmapped = ' --unmapped'
+        }  
+        """
+        if [ -d ${input} ]; then
+            samtools index -M ${input}/*.bam
+            bamstats ${extra_args} ${input}/*.bam | head -n +1 > bam_stats.txt;
+            for file in ${input}/*.bam; do
+                bamstats ${extra_args} ${unmapped} \$file | tail -n +2 >> bam_stats.txt
+            done
+            mv ${input} bams;
+        else
+            samtools index -M ${input}
+            bamstats ${extra_args} ${unmapped} ${input} > bam_stats.txt
+            mkdir bams
+            mv ${input} bams
+        fi
+        """
+}
 /**
- * Parse input arguments for `fastq_ingress`.
+ * Parse input arguments for `ingress`.
  *
- * @param arguments: map with input arguments (see `fastq_ingress` for details)
+ * @param arguments: map with input arguments (see `ingress` for details)
  * @return: map of parsed arguments
  */
 Map parse_arguments(Map arguments) {
@@ -245,10 +301,11 @@ Map parse_arguments(Map arguments) {
         kwargs:["sample": null,
                 "sample_sheet": null,
                 "analyse_unclassified": false,
-                "fastcat_stats": false,
+                "fastcat_stats": true,
                 "fastcat_extra_args": "",
-                "watch_path": false],
-        name: "fastq_ingress")
+                "watch_path": false,
+                "input_type": "fastq"],
+        name: "ingress")
     return parser.parse_args(arguments)
 }
 
@@ -256,12 +313,12 @@ Map parse_arguments(Map arguments) {
 /**
  * Find valid inputs based on the input type.
  *
- * @param margs: parsed arguments (see `fastq_ingress` for details)
+ * @param margs: parsed arguments (see `ingress` for details)
  * @return: channel of `[metamap, input-path]`; `input-path` can be the path to
- *  a single FASTQ file or to a directory containing FASTQ files
+ *  a single file or to a directory containing files with relevant extensions
  */
-def get_valid_inputs(Map margs){
-    log.info "Checking fastq input."
+def get_valid_inputs(Map margs, ArrayList extensions){
+    log.info "Checking ${margs["input_type"]} input."
     Path input
     try {
         input = file(margs.input, checkIfExists: true)
@@ -270,7 +327,7 @@ def get_valid_inputs(Map margs){
     }
     // declare resulting input channel and other variables needed in the outer scope
     def ch_input
-    ArrayList sub_dirs_with_fastq_files
+    ArrayList sub_dirs_with_files
     // handle case of `input` being a single file
     if (input.isFile()) {
         // the `fastcat` process can deal with directories or single file inputs
@@ -278,41 +335,41 @@ def get_valid_inputs(Map margs){
             [create_metamap([alias: margs["sample"] ?: input.simpleName]), input])
     } else if (input.isDirectory()) {
         // input is a directory --> we accept two cases: (i) a top-level directory with
-        // fastq files and no sub-directories or (ii) a directory with one layer of
-        // sub-directories containing fastq files
-        boolean dir_has_fastq_files = get_fq_files_in_dir(input)
-        // find potential sub-directories (and sub-dirs with FASTQ files; note that
+        // relevant files and no sub-directories or (ii) a directory with one layer of
+        // sub-directories containing relevant files
+        boolean dir_has_files = get_files_in_dir(input, extensions)
+        // find potential sub-directories (and sub-dirs with relevant files; note that
         // these lists can be empty)
         ArrayList sub_dirs = file(input.resolve('*'), type: "dir")
-        sub_dirs_with_fastq_files = sub_dirs.findAll { get_fq_files_in_dir(it) }
-        // deal with first case (top-lvl dir with FASTQ files and no sub-directories
-        // containing FASTQ files)
-        if (dir_has_fastq_files) {
-            if (sub_dirs_with_fastq_files) {
-                error "Input directory '$input' cannot contain FASTQ " +
-                    "files and sub-directories with FASTQ files."
+        sub_dirs_with_files = sub_dirs.findAll { get_files_in_dir(it, extensions) }
+        // deal with first case (top-lvl dir with relevant files and no sub-directories
+        // containing relevant files)
+        if (dir_has_files) {
+            if (sub_dirs_with_files) {
+                error "Input directory '$input' cannot contain ${margs["input_type"]} " +
+                    "files and sub-directories with ${margs["input_type"]} files."
             }
             ch_input = Channel.of(
                 [create_metamap([alias: margs["sample"] ?: input.baseName]), input])
         } else {
-            // deal with the second case (sub-directories with fastq data) --> first
+            // deal with the second case (sub-directories with relevant data) --> first
             // check whether we actually found sub-directories
-            if (!sub_dirs_with_fastq_files) {
-                error "Input directory '$input' must contain either FASTQ files " +
-                    "or sub-directories containing FASTQ files."
+            if (!sub_dirs_with_files) {
+                error "Input directory '$input' must contain either ${margs["input_type"]} files " +
+                    "or sub-directories containing ${margs["input_type"]} files."
             }
-            // make sure that there are no sub-sub-directories with FASTQ files and that
-            // the sub-directories actually contain fastq files)
+            // make sure that there are no sub-sub-directories with relevant files and that
+            // the sub-directories actually contain relevant files)
             if (sub_dirs.any {
                 ArrayList subsubdirs = file(it.resolve('*'), type: "dir")
-                subsubdirs.any { get_fq_files_in_dir(it) }
+                subsubdirs.any { get_files_in_dir(it, extensions) }
             }) {
                 error "Input directory '$input' cannot contain more " +
-                    "than one level of sub-directories with FASTQ files."
+                    "than one level of sub-directories with ${margs["input_type"]} files."
             }
             // remove directories called 'unclassified' unless otherwise specified
             if (!margs.analyse_unclassified) {
-                sub_dirs_with_fastq_files = sub_dirs_with_fastq_files.findAll {
+                sub_dirs_with_files = sub_dirs_with_files.findAll {
                     it.baseName != "unclassified"
                 }
             }
@@ -322,7 +379,7 @@ def get_valid_inputs(Map margs){
                 def ch_sample_sheet = get_sample_sheet(file(margs.sample_sheet))
                 // get the union of both channels (missing values will be replaced with
                 // `null`)
-                def ch_union = Channel.fromPath(sub_dirs_with_fastq_files).map {
+                def ch_union = Channel.fromPath(sub_dirs_with_files).map {
                     [it.baseName, it]
                 }.join(ch_sample_sheet.map{[it.barcode, it]}, remainder: true)
                 // after joining the channels, there are three possible cases:
@@ -340,7 +397,7 @@ def get_valid_inputs(Map margs){
                     }
                 }
             } else {
-                ch_input = Channel.fromPath(sub_dirs_with_fastq_files).map {
+                ch_input = Channel.fromPath(sub_dirs_with_files).map {
                     [create_metamap([alias: it.baseName, barcode: it.baseName]), it]
                 }
             }
@@ -350,9 +407,9 @@ def get_valid_inputs(Map margs){
     }
     // a sample sheet only makes sense in the case of a directory with
     // sub-directories
-    if (margs.sample_sheet && !sub_dirs_with_fastq_files) {
+    if (margs.sample_sheet && !sub_dirs_with_files) {
         error "Sample sheet was provided, but input does not contain " +
-            "sub-directories with FASTQ files."
+            "sub-directories with ${margs["input_type"]} files."
     }
     return ch_input
 }
@@ -380,13 +437,13 @@ Map create_metamap(Map arguments) {
 
 
 /**
- * Get the fastq files in the directory (non-recursive).
+ * Get the relevant files in the directory (non-recursive).
  *
  * @param dir: path to the target directory
- * @return: list of found fastq files
+ * @return: list of found relevant files
  */
-ArrayList get_fq_files_in_dir(Path dir) {
-    return EXTENSIONS.collect { file(dir.resolve("*.$it"), type: "file") } .flatten()
+ArrayList get_files_in_dir(Path dir, ArrayList extensions) {
+    return extensions.collect { file(dir.resolve("*.$it"), type: "file") } .flatten()
 }
 
 
