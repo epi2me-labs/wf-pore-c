@@ -1,7 +1,7 @@
 #!usr/bin/env nextflow
 import groovy.json.JsonBuilder
 nextflow.enable.dsl = 2
-
+include { ingress } from "./lib/ingress"
 include {
     index_ref_fai
     decompress_ref
@@ -28,8 +28,22 @@ include {
 } from './modules/local/4dn'
 
 
-include { check_input } from "./subworkflows/local/input_check"
 include { prepare_genome } from "./subworkflows/local/prepare_genome"
+
+process chunk_ubam {
+    label "wfporec"
+    input:
+        tuple val(meta), path(bam)
+        val chunk_size
+    output:
+        tuple val(meta), path("batches/shard*.bam")
+    shell:
+        args = task.ext.args ?: " "
+    """
+    mkdir batches
+    pore-c-py chunk-bam $bam/*.bam "batches/shard" --chunk_size $chunk_size $args
+    """
+}
 
 // entrypointworkflow
 WorkflowMain.initialise(workflow, params, log)
@@ -40,16 +54,53 @@ workflow POREC {
             Pinguscript.ping_post(workflow, 'start', 'none', params.out_dir, params)
         }
         /// PREPARE INPUTS  ///
+        // make sure that one of `--fastq` or `--ubam` was given
+        def input_type = ['fastq', 'ubam'].findAll { params[it] }
+        if (input_type.size() != 1) {
+            error "Only provide one of '--fastq' or '--ubam'."
+        }
+        input_type = input_type[0]
+
+        sample_data = ingress([
+        "input":params[input_type],
+        "sample":params.sample,
+        "sample_sheet":params.sample_sheet,
+        "analyse_unclassified":params.analyse_unclassified,
+        "fastcat_stats": true,
+        "fastcat_extra_args": "",
+        "input_type": input_type])
+
         // create channel of input concatemers
-        check_input(
-            params.chunk_size
-        ).set { ch_chunks }  // [meta, ubam_chunk]
-        
-        // scalar channel of genome files.
+        reads = sample_data.map{meta,bam,reads -> [meta, bam]}
+        if (params.chunk_size > 0) {
+            reads = chunk_ubam(sample_data, channel.value(params.chunk_size)).transpose()
+        }
+        if (params.params_sheet == null) {
+            ch_chunks = reads.map{meta, bam ->
+                vcf_file = params.vcf == null ? null : file(params.vcf, checkExists:true)
+                tbi_file = vcf_file == null ? null : file(params.vcf + '.tbi')
+                [ meta + [enzyme: params.cutter, vcf:vcf_file, tbi:tbi_file], bam]}
+        } else {
+            // create tuples from params sheet
+            per_sample_file = Channel.fromPath(params.params_sheet).splitCsv(header:true)
+            per_sample = per_sample_file.map { it ->  
+                vcf_file = (it["vcf"] == null || it["vcf"] == '' )? null : file(it["vcf"], checkExists: true)
+                tbi_file = vcf_file == null ? null : file(it["vcf"] + '.tbi')
+                [it["alias"], it["cutter"], vcf_file, tbi_file]}
+            // combine with output of ingress
+            combined_samples = reads
+            .map { [it[0]["alias"], *it] }
+            .combine(per_sample, by: 0)
+            .map { it[1..-1] }
+            // add tuple values to meta data
+            ch_chunks = combined_samples.map{meta, bam, cutter, vcf_file, tbi_file ->
+             [meta + [enzyme: cutter, vcf:vcf_file, tbi:tbi_file], bam]}
+        }
+     
         ref = prepare_genome(params.ref, params.minimap2_settings)
         
-       /// RUN PORE-C TOOLS ///
-        chunks_refs = ch_chunks.combine(ref.mmi).combine(ref.minimap2_settings)
+        /// RUN PORE-C TOOLS ///
+        chunks_refs = ch_chunks.map{it -> tuple(it[0], it[1])}.combine(ref.mmi).combine(ref.minimap2_settings)
         ch_annotated_monomers = digest_align_annotate(chunks_refs)
 
         // create a fork for samples that have phase info available
@@ -98,12 +149,10 @@ workflow POREC {
             .groupTuple()
         )
 
-
         if (params.coverage || params.pairs || params.mcool ) {
             // for each enzyme a bed file of the fragments
             digest_ch = create_restriction_bed(
-                ch_chunks
-                .map(i -> [i[0].cutter])
+                ch_chunks.map{meta, bam -> meta.enzyme}
                 .unique()
                 .combine(ref.fasta)
                 .combine(ref.fai)
@@ -131,7 +180,7 @@ workflow POREC {
                 .cross(
                     ch_annotated_monomers
                     .ns_bam
-                    .map(i -> [i[0].cutter, i[0], i[1]]) // [key, meta, bam]
+                    .map(i -> [i[0].enzyme, i[0], i[1]]) // [key, meta, bam]
                 )
                 .map(i -> [
                         i[1][1], // meta
@@ -162,7 +211,7 @@ workflow POREC {
                 pairs_report = pair_stats_report(
                     pairs_stats
                 )
-                //pairs_report.view()
+          
             }
         }
         /// CHROMUNITY
@@ -183,8 +232,6 @@ workflow POREC {
                 .groupTuple()
             )
         }
-
-
 
     emit:
         name_sorted_bam = ns_bam
