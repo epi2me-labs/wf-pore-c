@@ -265,7 +265,7 @@ process bamstats {
         val extra_args
         val input_type
     output:
-        tuple val(meta), path("bams"), path("bamstats")
+        tuple val(meta), path("output.bam"), path("bamstats")
     script:
         def unmapped = ''
         if (input_type == "ubam"){
@@ -279,16 +279,18 @@ process bamstats {
             bamstats ${extra_args} -s $sample_name ${input}/*.*bam | head -n +1 > bamstats/per-read-stats.tsv
             for file in ${input}/*.*bam; do
                 bamstats ${extra_args} -s $sample_name ${unmapped} \$file | tail -n +2 >> bamstats/per-read-stats.tsv
+                cat \$file >> output.bam
             done
             mv ${input} bams;
         else
             samtools index -M ${input}
             bamstats ${extra_args} -s $sample_name ${unmapped} ${input} > bamstats/per-read-stats.tsv
-            mkdir bams
-            mv ${input} bams
+            mv ${input} output.bam
         fi
         """
 }
+
+
 
 
 /**
@@ -494,3 +496,4 @@ process validate_sample_sheet {
     workflow-glue check_sample_sheet $csv
     """
 }
+ 

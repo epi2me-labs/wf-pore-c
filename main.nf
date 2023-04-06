@@ -30,18 +30,21 @@ include {
 
 include { prepare_genome } from "./subworkflows/local/prepare_genome"
 
-process chunk_ubam {
+OPTIONAL_FILE = file("$projectDir/data/OPTIONAL_FILE")
+
+process index_ubam {
+
     label "wfporec"
     input:
-        tuple val(meta), path(bam)
+        tuple val(meta), path("concatemers.bam")
         val chunk_size
     output:
-        tuple val(meta), path("batches/shard*.bam")
+        tuple val(meta), path("concatemers.bam"), path("concatemers.bam.bci"), path("chunks.csv")
     shell:
         args = task.ext.args ?: " "
     """
-    mkdir batches
-    pore-c-py chunk-bam $bam/*.bam "batches/shard" --chunk_size $chunk_size $args
+    bamindex build -c ${params.chunk_size} -t ${task.cpus} concatemers.bam
+    bamindex dump concatemers.bam.bci > chunks.csv
     """
 }
 
@@ -127,15 +130,23 @@ workflow POREC {
         "input_type": input_type])
 
         // create channel of input concatemers
-        reads = sample_data.map{meta,bam,reads -> [meta, bam]}
+        input_reads = sample_data.map{meta,bam,reads -> [meta, bam]}
         if (params.chunk_size > 0) {
-            reads = chunk_ubam(reads, channel.value(params.chunk_size)).transpose()
+            chunks = index_ubam(input_reads, channel.value(params.chunk_size))
+            // create tuple for each region
+            reads = chunks.map{it -> 
+                tuple(
+                    it[0], it[1], it[2], 
+                    it[3].splitCsv(
+                        header: ['region', 'ref'], skip: 1 , sep:' ').ref)}.transpose()
+        } else {
+            reads = input_reads.combine(Channel.of(tuple(OPTIONAL_FILE, 'NA')))
         }
         if (params.params_sheet == null) {
-            ch_chunks = reads.map{meta, bam ->
+            ch_chunks = reads.map{meta, bam, index, ref ->
                 vcf_file = params.vcf == null ? null : file(params.vcf, checkExists:true)
                 tbi_file = vcf_file == null ? null : file(params.vcf + '.tbi')
-                [ meta + [enzyme: params.cutter, vcf:vcf_file, tbi:tbi_file], bam]}
+                [ meta + [enzyme: params.cutter, vcf:vcf_file, tbi:tbi_file], bam, index, ref]}
         } else {
             // create tuples from params sheet
             per_sample_file = Channel.fromPath(params.params_sheet).splitCsv(header:true)
@@ -149,14 +160,14 @@ workflow POREC {
             .combine(per_sample, by: 0)
             .map { it[1..-1] }
             // add tuple values to meta data
-            ch_chunks = combined_samples.map{meta, bam, cutter, vcf_file, tbi_file ->
-             [meta + [enzyme: cutter, vcf:vcf_file, tbi:tbi_file], bam]}
+            ch_chunks = combined_samples.map{meta, bam, index, ref, cutter, vcf_file, tbi_file ->
+             [meta + [enzyme: cutter, vcf:vcf_file, tbi:tbi_file], bam, index, ref]}
         }
-     
         ref = prepare_genome(params.ref, params.minimap2_settings)
         
         /// RUN PORE-C TOOLS ///
-        chunks_refs = ch_chunks.map{it -> tuple(it[0], it[1])}.combine(ref.mmi).combine(ref.minimap2_settings)
+        chunks_refs = ch_chunks.map{it[0..3]}.combine(ref.mmi).combine(ref.minimap2_settings)
+
         ch_annotated_monomers = digest_align_annotate(chunks_refs)
 
         // create a fork for samples that have phase info available
@@ -208,7 +219,7 @@ workflow POREC {
         if (params.coverage || params.pairs || params.mcool ) {
             // for each enzyme a bed file of the fragments
             digest_ch = create_restriction_bed(
-                ch_chunks.map{meta, bam -> meta.enzyme}
+                ch_chunks.map{meta, bam, index, ref -> meta.enzyme}
                 .unique()
                 .combine(ref.fasta)
                 .combine(ref.fai)

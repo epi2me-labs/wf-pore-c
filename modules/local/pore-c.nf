@@ -4,21 +4,23 @@ process digest_align_annotate {
     maxForks 10
     label 'wfporec'
     input:
-        tuple val(meta), path("concatemers.bam"), path("reference.fasta.mmi"),
-              val(minimap2_settings)
+        tuple val(meta), path("concatemers.bam"),
+            path("concatemers.bam.bci"),
+            val(ref), path("reference.fasta.mmi"),
+            val(minimap2_settings)
     output:
         tuple val(meta),
-            path("${meta.sample_id}_out.ns.bam"),
+            path("${meta.alias}_out.ns.bam"),
             emit: ns_bam
         tuple val(meta),
-            path("${meta.sample_id}.cs.bam"),
-            path("${meta.sample_id}.cs.bam.csi"),
+            path("${meta.alias}.cs.bam"),
+            path("${meta.alias}.cs.bam.csi"),
             emit: cs_bam
         tuple val(meta),
-            path("${meta.sample_id}.chromunity.parquet"),
+            path("${meta.alias}.chromunity.parquet"),
             emit: chromunity_pq, optional: true
         tuple val(meta),
-            path("${meta.sample_id}.pe.bam"),
+            path("${meta.alias}.pe.bam"),
             emit: paired_end_bam, optional: true
     script:
         args = task.ext.args ?: " "
@@ -43,19 +45,35 @@ process digest_align_annotate {
         if (params.summary) {
             args  += "--summary "
         }
-        test_task = task.ext.suffix
-    """
-    pore-c-py digest "concatemers.bam" "${meta.enzyme}" \
-    --threads ${params.digest_annotate_threads} |
-    samtools fastq --threads 1 -T '*'  |
-    minimap2 -ay -t ${params.ubam_map_threads} ${minimap2_settings} \
-    "reference.fasta.mmi" - |
-    pore-c-py annotate - "${meta.sample_id}" --monomers \
-    --threads ${params.digest_annotate_threads}  --stdout true ${args}|
-    tee "${meta.sample_id}_out.ns.bam" |
-    samtools sort -m 1G --threads ${params.digest_annotate_threads}  -u --write-index -o "${meta.sample_id}.cs.bam" - 
-    
-    """
+        def chunk = task.index - 1
+        if (params.chunk_size > 0){
+            """
+            echo "${ref}"
+            bamindex fetch --chunk=${chunk} "concatemers.bam" |
+            pore-c-py digest "${meta.enzyme}" --header "concatemers.bam" \
+            --threads ${params.digest_annotate_threads} |
+            samtools fastq --threads 1 -T '*' |
+            minimap2 -ay -t ${params.ubam_map_threads} ${minimap2_settings} \
+            "reference.fasta.mmi" - |
+            pore-c-py annotate - "${meta.alias}" --monomers \
+            --threads ${params.digest_annotate_threads}  --stdout true ${args} | \
+            tee "${meta.alias}_out.ns.bam" |
+            samtools sort -m 1G --threads ${params.digest_annotate_threads}  -u --write-index -o "${meta.alias}.cs.bam" -  
+            """  
+        }else{
+            """
+            pore-c-py digest "concatemers.bam" "${meta.enzyme}" --header "concatemers.bam" \
+            --threads ${params.digest_annotate_threads} | 
+            samtools fastq --threads 1 -T '*' |
+            minimap2 -ay -t ${params.ubam_map_threads} ${minimap2_settings} \
+            "reference.fasta.mmi" - |
+            pore-c-py annotate - "${meta.alias}" --monomers \
+            --threads ${params.digest_annotate_threads}  --stdout true ${args} | \
+            tee "${meta.alias}_out.ns.bam" |
+            samtools sort -m 1G --threads ${params.digest_annotate_threads}  -u --write-index -o "${meta.alias}.cs.bam" -  
+            """  
+        }
+        
 }
 
 process haplotagReads {
