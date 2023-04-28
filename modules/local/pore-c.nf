@@ -1,7 +1,6 @@
 process digest_align_annotate {
     errorStrategy = 'retry'
     maxRetries 3
-    maxForks 10
     label 'wfporec'
     input:
         tuple val(meta), path("concatemers.bam"),
