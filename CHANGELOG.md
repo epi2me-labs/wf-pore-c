@@ -4,18 +4,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [unreleased]
+### Added
+- Changed LICENSE to BSD-4-Clause.
+- Optional `required_sample_types` field added to fastqingress. The sample sheet must contain at least one of each sample type provided to be deemed valid.
+  
 ## [v0.0.3]
-# Fixed
+### Fixed
 - Reduce time by using bamindex instead of splitting bam.
-# Updated
+### Changed
 - Replace input check with fastq ingress.
 - Parameters to input fastq or ubam.
 - Output a basic report.
 
 ## [v0.0.2]
-# Fixed
+### Fixed
 - Create pairs report handling of missing references in pairs file.
-# Updated
+### Changed
 - Update Pore-c-py package used to v2.0.1
 - Improved performance
 - Use one pipe for digest, align and annotate processes.
