@@ -4,10 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [unreleased]
+## [v0.0.4]
 ### Added
-- Changed LICENSE to BSD-4-Clause.
-- Optional `required_sample_types` field added to fastqingress. The sample sheet must contain at least one of each sample type provided to be deemed valid.
+- Changed LICENSE to Oxford Nanopore Technologies PLC. Public License Version 1.0.
+- Test for Chromunity writer
+### Fixed
+- Use latest pore-c-py package with fix for the modified bases digest step.
   
 ## [v0.0.3]
 ### Fixed
