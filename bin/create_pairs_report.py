@@ -158,13 +158,16 @@ def main(pair_stats, report_html, show_chroms=None):
         ),
         pn.pane.DataFrame(pair_types, width=600),
     )
-
-    if not show_chroms:
-        show_chroms = chrom_freq.columns
-
-    chrom_freq = chrom_freq.reindex(columns=show_chroms, fill_value=0)
+    show_chroms_columns = chrom_freq.columns
+    show_chroms_index = chrom_freq.index
+    if show_chroms is not None:
+        show_chroms_columns = show_chroms_columns.intersection(show_chroms)
+        show_chroms_index = show_chroms_index.intersection(show_chroms)
+    chrom_freq = chrom_freq.reindex(
+        index=show_chroms_index, columns=show_chroms_columns, fill_value=0
+    )
     chrom_contact_pane = pn.Row(
-        chrom_freq.loc[show_chroms, show_chroms].hvplot.heatmap(
+        chrom_freq.hvplot.heatmap(
             width=600,
             height=600,
             colorbar=False,
@@ -172,7 +175,7 @@ def main(pair_stats, report_html, show_chroms=None):
             colormap="viridis",
             title="Contact Count",
         ),
-        chrom_freq.loc[show_chroms, show_chroms]
+        chrom_freq
         .pipe(lambda x: x.div(x.sum(axis=0), axis=1))
         .hvplot.heatmap(
             width=600,
