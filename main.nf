@@ -303,7 +303,7 @@ workflow POREC {
         // Make a report
         software_versions = getVersions()
         workflow_params = getParams()
-        metadata = reads.map { it[0] }.toList()
+        metadata = input_reads.map { it[0] }.toList()
         per_read_stats = sample_data.map {
             it[2] ? it[2].resolve('per-read-stats.tsv') : null
         }
