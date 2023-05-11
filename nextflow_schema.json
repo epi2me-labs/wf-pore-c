@@ -4,7 +4,7 @@
     "title": "epi2me-labs/wf-pore-c",
     "description": "Workflow for analysing Pore-c data.",
     "demo_url": "https://ont-exd-int-s3-euwst1-epi2me-labs.s3.amazonaws.com/wf-pore-c/wf-pore-c-demo.tar.gz",
-    "url": "https://github.com/epi2me-labs/wf-porec",
+    "url": "https://github.com/epi2me-labs/wf-pore-c",
     "type": "object",
     "definitions": {
         "input_options": {
@@ -56,7 +56,8 @@
                 "cutter": {
                     "type": "string",
                     "default": "NlaIII",
-                    "description": "The enzyme used in the restriction digest"
+                    "description": "The enzyme used in the restriction digest.",
+                    "help_text": "Any enzyme from the Biopython restriction dictionary can be used. See `https://github.com/biopython/biopython/blob/master/Bio/Restriction/Restriction_Dictionary.py`"
                 }
             },
             "required": [
@@ -245,7 +246,7 @@
             "type": "string",
             "description": "The main process label for template processes to use by default",
             "hidden": true,
-            "default": "wf-porec"
+            "default": "wf-pore-c"
         },
         "aws_image_prefix": {
             "type": "string",
