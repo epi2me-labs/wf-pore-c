@@ -21,7 +21,6 @@ macos-run:
     tags:
         - macos
         - x86
-        - oxford
 
 docker-run:
     parallel:
