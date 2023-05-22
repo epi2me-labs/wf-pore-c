@@ -11,7 +11,7 @@ variables:
     # (not things such as -profile)
     NF_WORKFLOW_OPTS: "--ubam test_data/porec_test.concatemers.bam --chunk_size 100 --ref \
     test_data/porec_test.fasta --phased_vcf test_data/porec_test.phased_variants.vcf.gz \
-    --mcool_resolutions 10,20,30 --cutter NlaIII \
+    --cutter NlaIII \
     --vcf test_data/porec_test.phased_variants.vcf.gz --pairs \
     --chromunity --paired_end --filter_pairs --paired_end_minimum_distance 100 \
     --paired_end_maximum_distance 200 "
@@ -34,7 +34,7 @@ docker-run:
           variables:
             NF_WORKFLOW_OPTS: "--ubam test_data/porec_test.concatemers.bam --chunk_size 100 --ref \
             test_data/porec_test.fasta --phased_vcf test_data/porec_test.phased_variants.vcf.gz \
-            --mcool_resolutions 10,20,30 --cutter NlaIII \
+            --cutter NlaIII \
             --vcf test_data/porec_test.phased_variants.vcf.gz --pairs \
             --chromunity --paired_end --filter_pairs --paired_end_minimum_distance 100 \
             --paired_end_maximum_distance 200"
@@ -42,7 +42,7 @@ docker-run:
           variables:
             NF_WORKFLOW_OPTS: "--ubam test_data/bams --ref \
             test_data/porec_test.fasta  \
-            --mcool_resolutions 10,20,30 --cutter NlaIII \
+            --cutter NlaIII \
             --vcf test_data/porec_test.phased_variants.vcf.gz --pairs \
             --chromunity --paired_end --filter_pairs --paired_end_minimum_distance 100 \
             --paired_end_maximum_distance 200 --sample_sheet test_data/sample_sheet.csv"
@@ -51,7 +51,7 @@ docker-run:
           variables:
             NF_WORKFLOW_OPTS: "--ubam test_data/bams --ref \
             test_data/porec_test.fasta \
-            --mcool_resolutions 10,20,30 --cutter NlaIII \
+            --cutter NlaIII \
             --vcf test_data/porec_test.phased_variants.vcf.gz --pairs \
             --chromunity --paired_end --filter_pairs --paired_end_minimum_distance 100 \
             --paired_end_maximum_distance 200 --sample_sheet test_data/sample_sheet.csv \
@@ -61,7 +61,7 @@ docker-run:
           variables:
             NF_WORKFLOW_OPTS: "--fastq test_data/porec_test.concatemers.fastq --ref \
             test_data/porec_test.fasta --phased_vcf test_data/porec_test.phased_variants.vcf.gz \
-            --mcool_resolutions 10,20,30 --cutter NlaIII \
+            --cutter NlaIII \
             --vcf test_data/porec_test.phased_variants.vcf.gz --pairs \
             --chromunity --paired_end --filter_pairs --paired_end_minimum_distance 100 \
             --paired_end_maximum_distance 200"
@@ -70,8 +70,8 @@ docker-run:
           variables:
             NF_WORKFLOW_OPTS: "--fastq test_data/porec_test.concatemers.fastq --ref \
             test_data/porec_test.fasta --phased_vcf test_data/porec_test.phased_variants.vcf.gz \
-            --mcool_resolutions 10,20,30 --cutter NlaIII \
+            --mcool_resolutions 1000,2000,3000 --cutter NlaIII \
             --vcf test_data/porec_test.phased_variants.vcf.gz --pairs \
             --chromunity --paired_end --filter_pairs --paired_end_minimum_distance 100 \
-            --paired_end_maximum_distance 200 --chromunity --chromunity_merge_distance 5"
+            --paired_end_maximum_distance 200 --chromunity --chromunity_merge_distance 5 --mcool"
             NF_IGNORE_PROCESSES: "index_ubam"
