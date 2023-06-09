@@ -26,7 +26,7 @@ docker-run:
     parallel:
         matrix:
             - MATRIX_NAME: [
-                "no-sample-sheet-chunk", "sample-sheet", "param-sheet", "fastq", "chromunity"]
+                "no-sample-sheet-chunk", "sample-sheet", "param-sheet", "fastq", "chromunity", "input-dir"]
     rules:
         - if: ($CI_COMMIT_BRANCH == null || $CI_COMMIT_BRANCH == "dev-template")
           when: never
@@ -57,6 +57,14 @@ docker-run:
             --paired_end_maximum_distance 200 --sample_sheet test_data/sample_sheet.csv \
             --params_sheet test_data/param_sheet.csv"
             NF_IGNORE_PROCESSES: "index_ubam"
+        - if: $MATRIX_NAME == "input-dir"
+          variables:
+            NF_WORKFLOW_OPTS: "--ubam test_data/bams_dir --chunk_size 500 --ref \
+            test_data/porec_test.fasta --phased_vcf test_data/porec_test.phased_variants.vcf.gz \
+            --cutter NlaIII \
+            --vcf test_data/porec_test.phased_variants.vcf.gz --pairs \
+            --chromunity --paired_end --filter_pairs --paired_end_minimum_distance 100 \
+            --paired_end_maximum_distance 200"
         - if: $MATRIX_NAME == "fastq"
           variables:
             NF_WORKFLOW_OPTS: "--fastq test_data/porec_test.concatemers.fastq --ref \

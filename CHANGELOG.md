@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [unreleased]
 ### Changed
+- Update fastcat which removes need to index ubam.
 - Enum choices are enumerated in the `--help` output
 - Enum choices are enumerated as part of the error message when a user has selected an invalid choice
 ### Fixed
