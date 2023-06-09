@@ -274,16 +274,20 @@ process bamstats {
         def sample_name = meta["alias"]
         """
         mkdir bamstats
-        if [ -d ${input} ]; then
-            samtools index -M ${input}/*.*bam
-            bamstats ${extra_args} -s $sample_name ${input}/*.*bam | head -n +1 > bamstats/per-read-stats.tsv
+        if [[ -d ${input} ]] 
+        then
+            count=0
             for file in ${input}/*.*bam; do
-                bamstats ${extra_args} -s $sample_name ${unmapped} \$file | tail -n +2 >> bamstats/per-read-stats.tsv
-                cat \$file >> output.bam
+                if [[ \$count -eq 0 ]]
+                then
+                    bamstats ${extra_args} -s $sample_name ${unmapped} \$file >> bamstats/per-read-stats.tsv 
+                    count=1
+                else
+                    bamstats ${extra_args} -s $sample_name ${unmapped} \$file | tail -n +2 >> bamstats/per-read-stats.tsv
+                fi
             done
-            mv ${input} bams;
+            samtools cat -o output.bam --no-PG ${input}/*.bam;
         else
-            samtools index -M ${input}
             bamstats ${extra_args} -s $sample_name ${unmapped} ${input} > bamstats/per-read-stats.tsv
             mv ${input} output.bam
         fi
