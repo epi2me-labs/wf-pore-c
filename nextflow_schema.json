@@ -88,8 +88,9 @@
             "properties": {
                 "chunk_size": {
                     "type": "integer",
-                    "default": -1,
-                    "description": "Split input bam into reads of this size"
+                    "default": 25000,
+                    "description": "Process input in chunks of this number of reads.",
+                    "help_text": "To reduce per-process memory requirements for large datasets, process the inputs in chunks of reads. Set to 0 to process entire dataset in one go."
                 },
                 "threads": {
                     "type": "integer",
@@ -98,18 +99,21 @@
                 },
                 "ubam_map_threads": {
                     "type": "integer",
-                    "default": 4,
-                    "description": "Set max number of threads to use for aligning reads from uBAM (limited by config executor cpus)"
+                    "default": 1,
+                    "description": "Set max number of threads to use for aligning reads from uBAM (limited by config executor cpus).",
+                    "help_text": "If enough compute is available, 12 is recommended for this parameter."
                 },
                 "digest_annotate_threads": {
                     "type": "integer",
-                    "default": 2,
-                    "description": "Set max number of threads to use for sorting and indexing aligned reads from uBAM, digesting and annotation (limited by config executor cpus)"
+                    "default": 1,
+                    "description": "Set max number of threads to use for sorting and indexing aligned reads steps from uBAM, digesting and annotation (limited by config executor cpus).",
+                    "help_text": "If enough compute is available, 2 is recommended for this parameter. Note that `--ubam_map_threads` + 3x this number of threads will be used in the digest_align_annotate process."
                 },
                 "ubam_bam2fq_threads": {
                     "type": "integer",
-                    "default": 2,
-                    "description": "Set max number of threads to use for uncompressing uBAM and generating FASTQ for alignment (limited by config executor cpus)"
+                    "default": 1,
+                    "description": "Set max number of threads to use for decompressing uBAM and generating FASTQ for alignment (limited by config executor cpus).",
+                    "help_text": "1 is recommended for this parameter."
                 }
             },
             "help_text": "These advanced options do not need to be changed for typical use, but allow fine tuning of workflows for users who want more control over the workflow."
@@ -138,12 +142,13 @@
                 "chromunity": {
                     "type": "boolean",
                     "default": false,
-                    "description": "Create parquet files for Chromunity"
+                    "description": "Create parquet files for Chromunity.",
+                    "help_text": "See the chromunity documentation for further details 'https://github.com/mskilab/chromunity'."
                 },
                 "chromunity_merge_distance": {
                     "type": "integer",
                     "default": -1,
-                    "description": "Merge colinear alignments separated by less than this distance into a single monomer"
+                    "description": "Merge colinear alignments separated by less than this base pair distance into a single monomer."
                 }
             }
         },
@@ -154,21 +159,25 @@
             "properties": {
                 "pairs": {
                     "type": "boolean",
-                    "description": "Create a 4DN-format pairs file (also calculate stats)."
+                    "description": "Create a 4DN-format pairs file (also calculate stats).",
+                    "help_text": "Outputs a directory with a pairs stats report and a pairs file which can be used for downstream anaylsis."
                 },
                 "mcool": {
                     "type": "boolean",
-                    "description": "Create a multi-resolution cooler file"
+                    "description": "Create a multi-resolution cooler file. Will output the cooler formatted file which you can load with cooler.",
+                    "help_text": "see 'https://open2c.github.io/cooler' for more details."
                 },
                 "cool_bin_size": {
                     "type": "integer",
                     "default": 1000,
-                    "description": "The resolution of the base cooler file"
+                    "description": "The bin size of the cooler output file in base pairs.",
+                    "help_text": "see 'https://open2c.github.io/cooler' for more details."
                 },
                 "mcool_resolutions": {
                     "type": "string",
-                    "default": "4DN",
-                    "description": "The resolutions of the mcool file (see cooler documentation for details)."
+                    "default": "1000,2000,5000N",
+                    "description": "The resolutions of the mcool file in pixels (see cooler documentation for details).",
+                    "help_text": "Comma-separated list of target resolutions. Use suffixes B or N to specify a progression: B for binary (geometric steps of factor 2), N for nice (geometric steps of factor 10 interleaved with steps of 2 and 5). This is the equivalent of the `--resolutions` flag in cooler; see an example here 'https://cooler.readthedocs.io/en/latest/cli.html'."
                 }
             }
         },

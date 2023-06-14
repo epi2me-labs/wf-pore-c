@@ -1,6 +1,7 @@
 process digest_align_annotate {
     errorStrategy = 'retry'
     maxRetries 3
+    cpus params.ubam_map_threads + (3*params.digest_annotate_threads)
     label 'wfporec'
     input:
         tuple val(meta), path("concatemers.bam"),
