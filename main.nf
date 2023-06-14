@@ -32,6 +32,7 @@ include { prepare_genome } from "./subworkflows/local/prepare_genome"
 
 OPTIONAL_FILE = file("$projectDir/data/OPTIONAL_FILE")
 
+// bamindex will work with bam or fastq format file as input
 process index_ubam {
 
     label "wfporec"

@@ -43,7 +43,7 @@ docker-run:
             NF_WORKFLOW_OPTS: "--ubam test_data/bams --ref \
             test_data/porec_test.fasta  \
             --cutter NlaIII \
-            --vcf test_data/porec_test.phased_variants.vcf.gz --pairs \
+            --vcf test_data/porec_test.phased_variants.vcf.gz --pairs --chunk_size 0 \
             --chromunity --paired_end --filter_pairs --paired_end_minimum_distance 100 \
             --paired_end_maximum_distance 200 --sample_sheet test_data/sample_sheet.csv"
             NF_IGNORE_PROCESSES: "index_ubam" 
@@ -52,7 +52,7 @@ docker-run:
             NF_WORKFLOW_OPTS: "--ubam test_data/bams --ref \
             test_data/porec_test.fasta \
             --cutter NlaIII \
-            --vcf test_data/porec_test.phased_variants.vcf.gz --pairs \
+            --vcf test_data/porec_test.phased_variants.vcf.gz --pairs --chunk_size 0 \
             --chromunity --paired_end --filter_pairs --paired_end_minimum_distance 100 \
             --paired_end_maximum_distance 200 --sample_sheet test_data/sample_sheet.csv \
             --params_sheet test_data/param_sheet.csv"
