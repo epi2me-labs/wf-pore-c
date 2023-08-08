@@ -211,7 +211,7 @@ def watch_path(Map margs, ArrayList extensions) {
 
 
 process move_or_compress {
-    label params.process_label
+    label "wf_common"
     cpus params.threads
     input:
         tuple val(meta), path(input)
@@ -234,7 +234,7 @@ process move_or_compress {
 
 
 process fastcat {
-    label params.process_label
+    label "wf_common"
     cpus params.threads
     input:
         tuple val(meta), path(input)
@@ -258,7 +258,7 @@ process fastcat {
 
 
 process bamstats {
-    label params.process_label
+    label "wf_common"
     cpus params.threads
     input:
         tuple val(meta), path(input)
@@ -493,7 +493,7 @@ def get_sample_sheet(Path sample_sheet) {
  * @return: string (optional)
  */
 process validate_sample_sheet {
-    label params.process_label
+    label "wf_common"
     input: path csv
     output: stdout
     """

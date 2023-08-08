@@ -42,7 +42,7 @@ process digest_align_annotate {
                 }
             }
         }
-        if (params.summary) {
+        if (params.summary_json) {
             args  += "--summary "
         }
         def chunk = task.index - 1
