@@ -10,7 +10,7 @@ variables:
     # Only common file inputs and option values need to be given here
     # (not things such as -profile)
     NF_WORKFLOW_OPTS: "--ubam test_data/porec_test.concatemers.bam --chunk_size 100 --ref \
-    test_data/porec_test.fasta --phased_vcf test_data/porec_test.phased_variants.vcf.gz \
+    test_data/porec_test.fasta \
     --cutter NlaIII \
     --vcf test_data/porec_test.phased_variants.vcf.gz --pairs \
     --chromunity --paired_end --filter_pairs --paired_end_minimum_distance 100 \
@@ -33,7 +33,7 @@ docker-run:
         - if: $MATRIX_NAME == "no-sample-sheet-chunk"
           variables:
             NF_WORKFLOW_OPTS: "--ubam test_data/porec_test.concatemers.bam --chunk_size 100 --ref \
-            test_data/porec_test.fasta --phased_vcf test_data/porec_test.phased_variants.vcf.gz \
+            test_data/porec_test.fasta \
             --cutter NlaIII \
             --vcf test_data/porec_test.phased_variants.vcf.gz --pairs \
             --chromunity --paired_end --filter_pairs --paired_end_minimum_distance 100 \
@@ -60,7 +60,7 @@ docker-run:
         - if: $MATRIX_NAME == "input-dir"
           variables:
             NF_WORKFLOW_OPTS: "--ubam test_data/bams_dir --chunk_size 500 --ref \
-            test_data/porec_test.fasta --phased_vcf test_data/porec_test.phased_variants.vcf.gz \
+            test_data/porec_test.fasta \
             --cutter NlaIII \
             --vcf test_data/porec_test.phased_variants.vcf.gz --pairs \
             --chromunity --paired_end --filter_pairs --paired_end_minimum_distance 100 \
@@ -68,7 +68,7 @@ docker-run:
         - if: $MATRIX_NAME == "fastq"
           variables:
             NF_WORKFLOW_OPTS: "--fastq test_data/porec_test.concatemers.fastq --ref \
-            test_data/porec_test.fasta --phased_vcf test_data/porec_test.phased_variants.vcf.gz \
+            test_data/porec_test.fasta \
             --cutter NlaIII \
             --vcf test_data/porec_test.phased_variants.vcf.gz --pairs \
             --chromunity --paired_end --filter_pairs --paired_end_minimum_distance 100 \
@@ -77,7 +77,7 @@ docker-run:
         - if: $MATRIX_NAME == "chromunity"
           variables:
             NF_WORKFLOW_OPTS: "--fastq test_data/porec_test.concatemers.fastq --ref \
-            test_data/porec_test.fasta --phased_vcf test_data/porec_test.phased_variants.vcf.gz \
+            test_data/porec_test.fasta \
             --mcool_resolutions 1000,2000,3000 --cutter NlaIII \
             --vcf test_data/porec_test.phased_variants.vcf.gz --pairs \
             --chromunity --paired_end --filter_pairs --paired_end_minimum_distance 100 \
