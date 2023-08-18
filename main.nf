@@ -143,26 +143,25 @@ workflow POREC {
         } else {
             reads = input_reads.combine(Channel.of(tuple(OPTIONAL_FILE, 'NA')))
         }
-        if (params.params_sheet == null) {
+        if (!params.sample_sheet) {
             ch_chunks = reads.map{meta, bam, index, ref ->
                 vcf_file = params.vcf == null ? null : file(params.vcf, checkExists:true)
                 tbi_file = vcf_file == null ? null : file(params.vcf + '.tbi')
-                [ meta + [enzyme: params.cutter, vcf:vcf_file, tbi:tbi_file], bam, index, ref]}
+                [meta + [cutter: params.cutter, vcf:vcf_file, tbi:tbi_file], bam, index, ref]}
         } else {
-            // create tuples from params sheet
-            per_sample_file = Channel.fromPath(params.params_sheet).splitCsv(header:true)
-            per_sample = per_sample_file.map { it ->  
-                vcf_file = (it["vcf"] == null || it["vcf"] == '' )? null : file(it["vcf"], checkExists: true)
-                tbi_file = vcf_file == null ? null : file(it["vcf"] + '.tbi')
-                [it["alias"], it["cutter"], vcf_file, tbi_file]}
+            // check meta vcf exists, add tbi and convert to files
+            per_sample = sample_data.map{meta,bam,reads -> meta
+                vcf_file = meta["vcf"] ? file(meta["vcf"], checkExists: true) : null
+                tbi_file = vcf_file ? file(meta["vcf"] + '.tbi') : null
+                [meta["alias"], vcf_file, tbi_file]}
             // combine with output of ingress
             combined_samples = reads
             .map { [it[0]["alias"], *it] }
             .combine(per_sample, by: 0)
             .map { it[1..-1] }
             // add tuple values to meta data
-            ch_chunks = combined_samples.map{meta, bam, index, ref, cutter, vcf_file, tbi_file ->
-             [meta + [enzyme: cutter, vcf:vcf_file, tbi:tbi_file], bam, index, ref]}
+            ch_chunks = combined_samples.map{meta, bam, index, ref, vcf_file, tbi_file ->
+            [meta + [vcf:vcf_file, tbi:tbi_file], bam, index, ref]}
         }
         ref = prepare_genome(params.ref, params.minimap2_settings)
         
@@ -218,9 +217,9 @@ workflow POREC {
         )
 
         if (params.coverage || params.pairs || params.mcool ) {
-            // for each enzyme a bed file of the fragments
+            // for each cutter a bed file of the fragments
             digest_ch = create_restriction_bed(
-                ch_chunks.map{meta, bam, index, ref -> meta.enzyme}
+                ch_chunks.map{meta, bam, index, ref -> meta.cutter}
                 .unique()
                 .combine(ref.fasta)
                 .combine(ref.fai)
@@ -248,7 +247,7 @@ workflow POREC {
                 .cross(
                     ch_annotated_monomers
                     .ns_bam
-                    .map(i -> [i[0].enzyme, i[0], i[1]]) // [key, meta, bam]
+                    .map(i -> [i[0].cutter, i[0], i[1]]) // [key, meta, bam]
                 )
                 .map(i -> [
                         i[1][1], // meta
@@ -321,6 +320,9 @@ workflow POREC {
 }
 
 workflow {
+    if (params.containsKey("params_sheet")) {
+        error = "`--params_sheet` parameter is deprecated. Use parameter `--sample_sheet` instead."
+    }
     POREC()
 }
 

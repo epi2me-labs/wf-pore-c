@@ -32,19 +32,12 @@
                     "type": "string",
                     "format": "file-path",
                     "title": "Sample sheet",
-                    "description": "A CSV file used to map barcodes to sample aliases. The sample sheet can be provided when the input data is a directory containing sub-directories with FASTQ files.",
-                    "help_text": "The sample sheet is a CSV file with, minimally, columns named `barcode` and `alias`. Extra columns are allowed. A `type` column is required for certain workflows and should have the following values; `test_sample`, `positive_control`, `negative_control`, `no_template_control`."
+                    "description": "A CSV file used to map barcodes to sample aliases and optionally provide per-sample parameters. The sample sheet can be provided when the input data is a directory containing sub-directories with FASTQ files.",
+                    "help_text": "The sample sheet is a CSV file with, minimally, columns named `barcode` and `alias`. Optionally, a `cutter` column can contain the name of the enzyme used per sample (see the `--cutter` parameter for more details) and a `vcf` column can be used to provide a phased VCF file per sample if you require haplotagged alignments."
                 },
                 "sample": {
                     "type": "string",
                     "description": "A single sample name for non-multiplexed data. Permissible if passing a single .fastq(.gz) file or directory of .fastq(.gz) files."
-                },
-                "params_sheet": {
-                    "type": "string",
-                    "title": "Parameter sheet",
-                    "format": "file-path",
-                    "description": "A CSV file to provide per sample cutter and VCF parameters in the format [alias, cutter, vcf]. The aliases will need to match those on the sample sheet.",
-                    "help_text": "VCF may be null if no phased vcf available for that sample."
                 },
                 "analyse_unclassified": {
                     "type": "boolean",
@@ -74,8 +67,7 @@
             "allOf": [
                 {
                     "required": [
-                        "ref",
-                        "cutter"
+                        "ref"
                     ]
                 },
                 {

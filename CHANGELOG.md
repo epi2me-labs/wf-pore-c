@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Nextflow minimum version 23.04.2.
 - `--sample_id` parameter has been changed to `--sample` for consistency.
 - `--summary_json` optional parameter with default set to true, to include an annotation summary json in outputs.
+- Remove `--params_sheet` parameter and add all per sample parameters to sample_sheet.
 
 ## [v0.0.8]
 * Improve schema parameter explanations and output file descriptions in the README.
