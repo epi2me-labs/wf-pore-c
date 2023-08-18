@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `--summary_json` optional parameter with default set to true, to include an annotation summary json in outputs.
 - Remove `--params_sheet` parameter and add all per sample parameters to sample_sheet.
 
+### Added
+- `--hi_c` optional parameter with default set to false, to include a `.hic` output file which is compatible with [Juice box](https://www.aidenlab.org/juicebox/).
+
 ## [v0.0.8]
 * Improve schema parameter explanations and output file descriptions in the README.
 * Add a default `--chunk_size` parameter value of 25000.

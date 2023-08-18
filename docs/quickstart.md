@@ -40,4 +40,4 @@ Optional outputs:
 * Multi-resolution cool `.mcool` file which can be used with downstream tools to provide a high resolution genomic interaction matrix. See [Cool tools documentation](https://github.com/open2c/cooltools) for details on downstream analysis. 
 * Chromunity directory with parquet files which can be used with the Chromunity package. Chromnity enables the nomination and statistical evaluation of high order interactions. See [Chromunity documentation](http://mskilab.com/chromunity/tutorial.html) for further details.
 * `Fragments.bed` file with the DNA fragments created from the virtual digest.
-
+* Hi-C `.hic` file which can be loaded into the [Juice box tool](https://www.aidenlab.org/juicebox/) for an alternative contact map visualisation.

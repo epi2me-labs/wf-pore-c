@@ -25,6 +25,7 @@ include {
    merge_pairs_stats
    create_restriction_bed
    pair_stats_report
+   prepare_hic
 } from './modules/local/4dn'
 
 
@@ -256,6 +257,7 @@ workflow POREC {
                         i[0][2], // bed
                     ])
                 ) | to_pairs_file | set {pair_chunks}
+            
             if (params.mcool) {
                 mcool_chunks = pairsToCooler(
                     pair_chunks
@@ -312,6 +314,11 @@ workflow POREC {
         report = makeReport(
             metadata, per_read_stats, software_versions, workflow_params
         )
+
+        if (params.hi_c){
+            hi_c = prepare_hic(merge_pairs.out.merged_pairs.combine(ref.fai))
+        }
+
 
     emit:
         name_sorted_bam = ns_bam

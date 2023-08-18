@@ -97,6 +97,12 @@
                     "default": "output",
                     "format": "directory-path",
                     "description": "Directory for output of all user-facing files."
+                },
+                "hi_c": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Output a Hi-C formatted file; will convert pairs format to a Hi-C (`.hic`) file which will be compatible with [juicer](https://github.com/aidenlab/juicer)",
+                    "help_text": "Load this file with [Juice box](https://www.aidenlab.org/juicebox/) for an alternative contact map visualisation."
                 }
             }
         },
