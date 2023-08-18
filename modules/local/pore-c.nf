@@ -50,7 +50,7 @@ process digest_align_annotate {
             """
             echo "${ref}"
             bamindex fetch --chunk=${chunk} "concatemers.bam" |
-            pore-c-py digest "${meta.enzyme}" --header "concatemers.bam" \
+            pore-c-py digest "${meta.cutter}" --header "concatemers.bam" \
             --threads ${params.digest_annotate_threads} |
             samtools fastq --threads 1 -T '*' |
             minimap2 -ay -t ${params.ubam_map_threads} ${minimap2_settings} \
@@ -62,7 +62,7 @@ process digest_align_annotate {
             """  
         }else{
             """
-            pore-c-py digest "concatemers.bam" "${meta.enzyme}" --header "concatemers.bam" \
+            pore-c-py digest "concatemers.bam" "${meta.cutter}" --header "concatemers.bam" \
             --threads ${params.digest_annotate_threads} | 
             samtools fastq --threads 1 -T '*' |
             minimap2 -ay -t ${params.ubam_map_threads} ${minimap2_settings} \
