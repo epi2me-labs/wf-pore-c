@@ -14,10 +14,27 @@ process to_pairs_file {
     """
     pairtools parse2  \
     --output-stats "${meta.sample_id}.stats.txt" \
-    -c "fasta.fai" --single-end --readid-transform 'readID.split(":")[0]'  \
+    -c "fasta.fai" --single-end --readid-transform 'readID.split(":")[0]' \
     $args "monomers.mm2.ns.bam" > extract_pairs.tmp
     pairtools restrict  -f "fragments.bed" -o "${meta.sample_id}.pairs.gz" extract_pairs.tmp
     rm -rf extract_pairs.tmp
+    """
+}
+
+
+process prepare_hic {
+    label 'wfporec'
+    input:
+        tuple val(meta), path("input.pairs.gz"), path("fasta.fai")
+    output:
+        path "${meta.sample_id}.hic", emit: hic
+    """
+    cut -f1,2 fasta.fai > sizes.genome
+    pairtools flip input.pairs.gz -c sizes.genome  > flipped.pairs.tmp
+    pairtools sort flipped.pairs.tmp > sorted.pairs.tmp
+    pairtools dedup sorted.pairs.tmp > dedup.pairs.tmp
+    java -jar /home/epi2melabs/juicer_tools_1.22.01.jar pre dedup.pairs.tmp "${meta.sample_id}.hic" sizes.genome
+    rm -rf "*.pairs.tmp"
     """
 }
 
@@ -26,7 +43,7 @@ process merge_pairs {
     input:
         tuple val(meta), path('to_merge/src*.pairs.gz')
     output:
-        tuple val(meta), path("${prefix}.pairs.gz")
+        tuple val(meta), path("${prefix}.pairs.gz"), emit: merged_pairs
     shell:
         prefix = task.ext.prefix ?: "${meta.sample_id}"
         def args = task.ext.args ?: "--concatenate"
