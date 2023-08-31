@@ -51,7 +51,7 @@ docker-run:
             NF_WORKFLOW_OPTS: "--ubam test_data/bams_dir --chunk_size 500 --ref \
             test_data/porec_test.fasta \
             --cutter NlaIII \
-            --vcf test_data/porec_test.phased_variants.vcf.gz --pairs \
+            --vcf test_data/porec_test.phased_variants.vcf.gz \
             --chromunity --paired_end --filter_pairs --paired_end_minimum_distance 100 \
             --paired_end_maximum_distance 200 --hi_c"
         - if: $MATRIX_NAME == "fastq"

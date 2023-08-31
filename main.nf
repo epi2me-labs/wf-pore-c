@@ -217,7 +217,7 @@ workflow POREC {
             .groupTuple()
         )
 
-        if (params.coverage || params.pairs || params.mcool ) {
+        if (params.coverage || params.pairs || params.mcool || params.hi_c) {
             // for each cutter a bed file of the fragments
             digest_ch = create_restriction_bed(
                 ch_chunks.map{meta, bam, index, ref -> meta.cutter}
@@ -243,7 +243,7 @@ workflow POREC {
                 ]) | mosdepth_coverage | set{ coverage }
         }
         /// 4DN file formats
-        if (params.pairs || params.mcool ) {
+        if (params.pairs || params.mcool || params.hi_c) {
             (digest_ch
                 .cross(
                     ch_annotated_monomers
@@ -270,7 +270,7 @@ workflow POREC {
                     .combine(Channel.of(params.mcool_resolutions))
                 )
             }
-            if (params.pairs) {
+            if (params.pairs || params.hi_c) {
                 unsorted_pairs = merge_pairs(
                     pair_chunks.pairs.map(i -> [i[0], i[2]]).groupTuple()
                 )
