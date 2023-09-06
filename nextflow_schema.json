@@ -156,6 +156,7 @@
                 },
                 "coverage": {
                     "type": "boolean",
+                    "default": false,
                     "description": "Calculate restriction-fragment coverage using mosdepth"
                 },
                 "summary_json": {
@@ -190,11 +191,13 @@
             "properties": {
                 "pairs": {
                     "type": "boolean",
+                    "default": false,
                     "description": "Create a 4DN-format pairs file (also calculate stats).",
                     "help_text": "Outputs a directory with a pairs stats report and a pairs file which can be used for downstream anaylsis."
                 },
                 "mcool": {
                     "type": "boolean",
+                    "default": false,
                     "title": "Multi-resolution cooler file (mcool)",
                     "description": "Create a multi-resolution cooler file. Will output the cooler formatted file which you can load with cooler.",
                     "help_text": "see 'https://open2c.github.io/cooler' for more details."
@@ -222,10 +225,12 @@
                 "paired_end": {
                     "type": "boolean",
                     "title": "Paired end bam",
-                    "description": "Create mock paired-end BAM files."
+                    "description": "Create mock paired-end BAM files.",
+                    "default": false
                 },
                 "filter_pairs": {
                     "type": "boolean",
+                    "default": false,
                     "description": "Filter paired end reads using minimum and maximum distance parameters."
                 },
                 "paired_end_minimum_distance": {
@@ -250,11 +255,17 @@
                     "type": "boolean",
                     "description": "Display help text.",
                     "fa_icon": "fas fa-question-circle",
-                    "hidden": true
+                    "hidden": true,
+                    "default": false
                 },
                 "disable_ping": {
                     "type": "boolean",
+                    "default": false,
                     "description": "Enable to prevent sending a workflow ping."
+                },
+                "version": {
+                    "type": "boolean",
+                    "default": false
                 }
             }
         }
@@ -302,9 +313,6 @@
             "default": true
         },
         "show_hidden_params": {
-            "type": "boolean"
-        },
-        "version": {
             "type": "boolean"
         }
     },
