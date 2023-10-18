@@ -46,7 +46,7 @@ def argparser():
     """Argument parser for entrypoint."""
     parser = wf_parser("report")
     parser.add_argument("report", help="Report output file")
-    parser.add_argument("--stats", nargs='*', help="Fastcat per-read stats file(s).")
+    parser.add_argument("--stats", nargs='+', help="Fastcat per-read stats file(s).")
     parser.add_argument(
         "--metadata", default='metadata.json',
         help="sample metadata")

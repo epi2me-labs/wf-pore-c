@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [unreleased]
+### Changed
+- `--ubam` parameter has been renamed `--bam`
+- All other ubam related parameters have been renamed with bam for consistency
+
 ## [v0.1.1]
 ### Changed
 - If `--hi_c` parameter set to true the pairs file will be created. 
