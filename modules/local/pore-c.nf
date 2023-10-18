@@ -1,7 +1,7 @@
 process digest_align_annotate {
     errorStrategy = 'retry'
     maxRetries 3
-    cpus params.ubam_map_threads + (3*params.digest_annotate_threads)
+    cpus params.bam_map_threads + (3*params.digest_annotate_threads)
     label 'wfporec'
     input:
         tuple val(meta), path("concatemers.bam"),
@@ -53,7 +53,7 @@ process digest_align_annotate {
             pore-c-py digest "${meta.cutter}" --header "concatemers.bam" \
             --threads ${params.digest_annotate_threads} |
             samtools fastq --threads 1 -T '*' |
-            minimap2 -ay -t ${params.ubam_map_threads} ${minimap2_settings} \
+            minimap2 -ay -t ${params.bam_map_threads} ${minimap2_settings} \
             "reference.fasta.mmi" - |
             pore-c-py annotate - "${meta.alias}" --monomers \
             --threads ${params.digest_annotate_threads}  --stdout true ${args} | \
@@ -65,7 +65,7 @@ process digest_align_annotate {
             pore-c-py digest "concatemers.bam" "${meta.cutter}" --header "concatemers.bam" \
             --threads ${params.digest_annotate_threads} | 
             samtools fastq --threads 1 -T '*' |
-            minimap2 -ay -t ${params.ubam_map_threads} ${minimap2_settings} \
+            minimap2 -ay -t ${params.bam_map_threads} ${minimap2_settings} \
             "reference.fasta.mmi" - |
             pore-c-py annotate - "${meta.alias}" --monomers \
             --threads ${params.digest_annotate_threads}  --stdout true ${args} | \

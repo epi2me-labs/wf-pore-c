@@ -51,7 +51,7 @@ process publish_artifact {
 }
 
 // what is better, this or the one in input_check that uses porecpy? - that is actually being used.
-process chunk_ubam {
+process chunk_bam {
     label 'wfporec'
     input:
         tuple val(meta), path("concatemers.bam")

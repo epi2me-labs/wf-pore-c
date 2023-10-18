@@ -1,7 +1,10 @@
 #!usr/bin/env nextflow
 import groovy.json.JsonBuilder
 nextflow.enable.dsl = 2
-include { ingress } from "./lib/ingress"
+include {
+    fastq_ingress
+    xam_ingress
+} from "./lib/ingress"
 include {
     index_ref_fai
     decompress_ref
@@ -34,7 +37,7 @@ include { prepare_genome } from "./subworkflows/local/prepare_genome"
 OPTIONAL_FILE = file("$projectDir/data/OPTIONAL_FILE")
 
 // bamindex will work with bam or fastq format file as input
-process index_ubam {
+process index_bam {
 
     label "wfporec"
     input:
@@ -86,7 +89,7 @@ process makeReport {
     label "wfporec"
     input:
         val metadata
-        path "per_read_stats.tsv"
+        path "per_read_stats/{?}.gz"
         path "versions/*"
         path "params.json"
     output:
@@ -98,7 +101,7 @@ process makeReport {
     echo '${metadata}' > metadata.json
     workflow-glue report $report_name \
         --metadata metadata.json \
-        --stats per_read_stats.tsv \
+        --stats per_read_stats/* \
         --versions versions \
         --params params.json
 
@@ -111,30 +114,35 @@ WorkflowMain.initialise(workflow, params, log)
 
 workflow POREC {
     main:
-        if (params.disable_ping == false) {
-            Pinguscript.ping_post(workflow, 'start', 'none', params.out_dir, params)
-        }
+        Pinguscript.ping_start(nextflow, workflow, params)
         /// PREPARE INPUTS  ///
-        // make sure that one of `--fastq` or `--ubam` was given
-        def input_type = ['fastq', 'ubam'].findAll { params[it] }
-        if (input_type.size() != 1) {
-            error "Only provide one of '--fastq' or '--ubam'."
-        }
-        input_type = input_type[0]
 
-        sample_data = ingress([
-        "input":params[input_type],
-        "sample":params.sample,
-        "sample_sheet":params.sample_sheet,
-        "analyse_unclassified":params.analyse_unclassified,
-        "fastcat_stats": true,
-        "fastcat_extra_args": "",
-        "input_type": input_type])
+        if (params.fastq) {
+            sample_data = fastq_ingress([
+                "input":params.fastq,
+                "sample":params.sample,
+                "sample_sheet":params.sample_sheet,
+                "analyse_unclassified":params.analyse_unclassified,
+                "stats": true,
+                "fastcat_extra_args": "",
+            ])
+        } else {
+        // if we didn't get a `--fastq`, there must have been a `--bam` (as is codified
+        // by the schema)
+            sample_data = xam_ingress([
+                "input":params.bam,
+                "sample":params.sample,
+                "sample_sheet":params.sample_sheet,
+                "analyse_unclassified":params.analyse_unclassified,
+                "keep_unaligned": true,
+                "stats": true,
+            ])
+        }
 
         // create channel of input concatemers
         input_reads = sample_data.map{meta,bam,reads -> [meta, bam]}
         if (params.chunk_size > 0) {
-            chunks = index_ubam(input_reads, channel.value(params.chunk_size))
+            chunks = index_bam(input_reads, channel.value(params.chunk_size))
             // create tuple for each region
             reads = chunks.map{it -> 
                 tuple(
@@ -306,11 +314,12 @@ workflow POREC {
         software_versions = getVersions()
         workflow_params = getParams()
         metadata = input_reads.map { it[0] }.toList()
-        per_read_stats = sample_data.map {
-            it[2] ? it[2].resolve('per-read-stats.tsv') : null
+        if (params.bam){
+            per_read_stats =  sample_data.map{ meta, samples, stats -> stats.resolve("bamstats.readstats.tsv.gz") }.toList()
         }
-        | collectFile ( keepHeader: true )
-
+        else{
+            per_read_stats =  sample_data.map{ meta, samples, stats -> stats.resolve("per-read-stats.tsv.gz") }.toList()
+        }
         report = makeReport(
             metadata, per_read_stats, software_versions, workflow_params
         )
@@ -333,12 +342,9 @@ workflow {
     POREC()
 }
 
-if (params.disable_ping == false) {
-    workflow.onComplete {
-        Pinguscript.ping_post(workflow, 'end', 'none', params.out_dir, params)
-    }
-
-    workflow.onError {
-        Pinguscript.ping_post(workflow, 'error', "$workflow.errorMessage", params.out_dir, params)
-    }
+workflow.onComplete {
+    Pinguscript.ping_complete(nextflow, workflow, params)
+}
+workflow.onError {
+    Pinguscript.ping_error(nextflow, workflow, params)
 }

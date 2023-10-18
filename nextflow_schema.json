@@ -14,11 +14,11 @@
             "fa_icon": "fas fa-terminal",
             "description": "Parameters for finding and handling input data for analysis.",
             "properties": {
-                "ubam": {
+                "bam": {
                     "type": "string",
                     "format": "file-path",
                     "title": "Unaligned BAM",
-                    "description": "An unaligned bam file containing Pore-C concatemer sequences",
+                    "description": "An unaligned BAM file containing Pore-C concatemer sequences",
                     "help_text": "This accepts one of three cases: (i) the path to a single BAM file; (ii) the path to a top-level directory containing BAM files; (iii) the path to a directory containing one level of sub-directories which in turn contain BAM files. In the first and second case, a sample name can be supplied with `--sample`. In the last case, the data is assumed to be multiplexed with the names of the sub-directories as barcodes. In this case, a sample sheet can be provided with `--sample_sheet`."
                 },
                 "fastq": {
@@ -79,7 +79,7 @@
                         },
                         {
                             "required": [
-                                "ubam"
+                                "bam"
                             ]
                         }
                     ]
@@ -123,22 +123,22 @@
                     "default": 4,
                     "description": "Set max number of threads to use for more intense processes (limited by config executor cpus)"
                 },
-                "ubam_map_threads": {
+                "bam_map_threads": {
                     "type": "integer",
                     "default": 1,
-                    "description": "Set max number of threads to use for aligning reads from uBAM (limited by config executor cpus).",
+                    "description": "Set max number of threads to use for aligning reads from BAM (limited by config executor cpus).",
                     "help_text": "If enough compute is available, 12 is recommended for this parameter."
                 },
                 "digest_annotate_threads": {
                     "type": "integer",
                     "default": 1,
-                    "description": "Set max number of threads to use for sorting and indexing aligned reads steps from uBAM, digesting and annotation (limited by config executor cpus).",
-                    "help_text": "If enough compute is available, 2 is recommended for this parameter. Note that `--ubam_map_threads` + 3x this number of threads will be used in the digest_align_annotate process."
+                    "description": "Set max number of threads to use for sorting and indexing aligned reads steps from BAM, digesting and annotation (limited by config executor cpus).",
+                    "help_text": "If enough compute is available, 2 is recommended for this parameter. Note that `--bam_map_threads` + 3x this number of threads will be used in the digest_align_annotate process."
                 },
-                "ubam_bam2fq_threads": {
+                "bam_bam2fq_threads": {
                     "type": "integer",
                     "default": 1,
-                    "description": "Set max number of threads to use for decompressing uBAM and generating FASTQ for alignment (limited by config executor cpus).",
+                    "description": "Set max number of threads to use for decompressing BAM and generating FASTQ for alignment (limited by config executor cpus).",
                     "help_text": "1 is recommended for this parameter."
                 }
             },
@@ -224,7 +224,7 @@
             "properties": {
                 "paired_end": {
                     "type": "boolean",
-                    "title": "Paired end bam",
+                    "title": "Paired end BAM",
                     "description": "Create mock paired-end BAM files.",
                     "default": false
                 },
