@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [unreleased]
 ### Fixed
+- Pairtools merge step single quote the input directory so it will not error with Argument list too long.
 - Chromunity parquet files now contain the correct column names.
 ### Changed
 - `--ubam` parameter has been renamed `--bam`
