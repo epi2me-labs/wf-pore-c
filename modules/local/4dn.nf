@@ -41,14 +41,15 @@ process prepare_hic {
 process merge_pairs {
     label 'wfporec'
     input:
-        tuple val(meta), path('to_merge/src*.pairs.gz')
+        tuple val(meta), path('to_merge/{?}.gz')
     output:
         tuple val(meta), path("${prefix}.pairs.gz"), emit: merged_pairs
     shell:
         prefix = task.ext.prefix ?: "${meta.sample_id}"
         def args = task.ext.args ?: "--concatenate"
     """
-    pairtools merge -o "${prefix}.pairs.gz" $args to_merge/src*.pairs.gz
+    # pass a quoted glob, pairtools will do its own globbing
+    pairtools merge -o "${prefix}.pairs.gz" $args 'to_merge/*'
     """
 }
 
