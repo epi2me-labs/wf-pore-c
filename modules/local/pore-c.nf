@@ -1,7 +1,7 @@
 process digest_align_annotate {
     errorStrategy = 'retry'
     maxRetries 3
-    cpus params.bam_map_threads + (3*params.digest_annotate_threads)
+    cpus params.threads
     label 'wfporec'
     input:
         tuple val(meta), path("concatemers.bam"),
@@ -46,31 +46,37 @@ process digest_align_annotate {
             args  += "--summary "
         }
         def chunk = task.index - 1
+        // 2 threads are recommended for each the pore-c-py processes
+        def digest_annotate_threads = params.threads >= 8 ? 2 : 1 
+        // if possible use 3 for samtools (--threads 2 + 1)
+        def samtools_threads = params.threads >= 8 ? 2 : 1
+        // calculate the left over threads for mapping and leave one as samtools will require 3
+        def ubam_map_threads = params.threads - (digest_annotate_threads * 2) - samtools_threads - 1
         if (params.chunk_size > 0){
             """
             echo "${ref}"
             bamindex fetch --chunk=${chunk} "concatemers.bam" |
             pore-c-py digest "${meta.cutter}" --header "concatemers.bam" \
-            --threads ${params.digest_annotate_threads} |
+            --threads ${digest_annotate_threads} |
             samtools fastq --threads 1 -T '*' |
-            minimap2 -ay -t ${params.bam_map_threads} ${minimap2_settings} \
+            minimap2 -ay -t ${ubam_map_threads} ${minimap2_settings} \
             "reference.fasta.mmi" - |
             pore-c-py annotate - "${meta.alias}" --monomers \
-            --threads ${params.digest_annotate_threads}  --stdout true ${args} | \
+            --threads ${digest_annotate_threads}  --stdout true ${args} | \
             tee "${meta.alias}_out.ns.bam" |
-            samtools sort -m 1G --threads ${params.digest_annotate_threads}  -u --write-index -o "${meta.alias}.cs.bam" -  
+            samtools sort -m 1G --threads ${samtools_threads}  -u --write-index -o "${meta.alias}.cs.bam" -  
             """  
         }else{
             """
             pore-c-py digest "concatemers.bam" "${meta.cutter}" --header "concatemers.bam" \
-            --threads ${params.digest_annotate_threads} | 
+            --threads ${digest_annotate_threads} | 
             samtools fastq --threads 1 -T '*' |
-            minimap2 -ay -t ${params.bam_map_threads} ${minimap2_settings} \
+            minimap2 -ay -t ${ubam_map_threads} ${minimap2_settings} \
             "reference.fasta.mmi" - |
             pore-c-py annotate - "${meta.alias}" --monomers \
-            --threads ${params.digest_annotate_threads}  --stdout true ${args} | \
+            --threads ${digest_annotate_threads}  --stdout true ${args} | \
             tee "${meta.alias}_out.ns.bam" |
-            samtools sort -m 1G --threads ${params.digest_annotate_threads}  -u --write-index -o "${meta.alias}.cs.bam" -  
+            samtools sort -m 1G --threads ${samtools_threads}  -u --write-index -o "${meta.alias}.cs.bam" -  
             """  
         }
         

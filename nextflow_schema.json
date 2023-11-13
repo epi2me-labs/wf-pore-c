@@ -121,25 +121,8 @@
                 "threads": {
                     "type": "integer",
                     "default": 4,
-                    "description": "Set max number of threads to use for more intense processes (limited by config executor cpus)"
-                },
-                "bam_map_threads": {
-                    "type": "integer",
-                    "default": 1,
-                    "description": "Set max number of threads to use for aligning reads from BAM (limited by config executor cpus).",
-                    "help_text": "If enough compute is available, 12 is recommended for this parameter."
-                },
-                "digest_annotate_threads": {
-                    "type": "integer",
-                    "default": 1,
-                    "description": "Set max number of threads to use for sorting and indexing aligned reads steps from BAM, digesting and annotation (limited by config executor cpus).",
-                    "help_text": "If enough compute is available, 2 is recommended for this parameter. Note that `--bam_map_threads` + 3x this number of threads will be used in the digest_align_annotate process."
-                },
-                "bam_bam2fq_threads": {
-                    "type": "integer",
-                    "default": 1,
-                    "description": "Set max number of threads to use for decompressing BAM and generating FASTQ for alignment (limited by config executor cpus).",
-                    "help_text": "1 is recommended for this parameter."
+                    "description": "Set maximum number of threads to use for more intense processes (limited by config executor cpus). We recommend a minimum of 4, but if available 19.",
+                    "help": "Increasing this will speed up some individual processes, but reduce the number of processes that can run in parallel, potentially increasing the time for the workflow to run overall."
                 }
             },
             "help_text": "These advanced options do not need to be changed for typical use, but allow fine tuning of workflows for users who want more control over the workflow."

@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - `--ubam` parameter has been renamed `--bam`
 - All other ubam related parameters have been renamed with bam for consistency
+- The `--bam_map_threads`, `--digest_annotate_threads` and `bam_bam2fq_threads` threading parameters are now automatically extracted from the `--threads` specifying the maximum number of threads to use for a process.
 
 ## [v0.1.1]
 ### Changed
