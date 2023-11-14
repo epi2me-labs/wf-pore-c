@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [unreleased]
+## [v0.2.0]
 ### Fixed
 - Pairtools merge step single quote the input directory so it will not error with Argument list too long.
 - Chromunity parquet files now contain the correct column names.
@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `--ubam` parameter has been renamed `--bam`
 - All other ubam related parameters have been renamed with bam for consistency
 - The `--bam_map_threads`, `--digest_annotate_threads` and `bam_bam2fq_threads` threading parameters are now automatically extracted from the `--threads` specifying the maximum number of threads to use for a process.
+### Removed
+- Default local executor CPU and RAM limits.
 
 ## [v0.1.1]
 ### Changed
