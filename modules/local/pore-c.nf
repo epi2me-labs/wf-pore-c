@@ -2,6 +2,7 @@ process digest_align_annotate {
     errorStrategy = 'retry'
     maxRetries 3
     cpus params.threads
+    memory "32 GB"
     label 'wfporec'
     input:
         tuple val(meta), path("concatemers.bam"),
@@ -84,6 +85,8 @@ process digest_align_annotate {
 
 process haplotagReads {
     label 'wfporec'
+    cpus 2
+    memory "16 GB"
     input:
         tuple val(meta),
             path("concatemers.cs.bam"),
@@ -112,6 +115,8 @@ process haplotagReads {
 /// gather individual parquets into a single directory
 process merge_parquets_to_dataset {
     label 'wfporec'
+    cpus 2
+    memory "2 GB"
     input:
     tuple val(meta),
           path("to_merge/part?????.parquet")

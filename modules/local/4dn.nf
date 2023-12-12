@@ -4,6 +4,8 @@ nextflow.enable.dsl = 2
 
 process to_pairs_file {
     label 'wfporec'
+    cpus 2
+    memory "8 GB"
     input:
         tuple val(meta), path("monomers.mm2.ns.bam"), path("fasta.fai"), path("fragments.bed")
     output:
@@ -24,6 +26,8 @@ process to_pairs_file {
 
 process prepare_hic {
     label 'wfporec'
+    cpus 2
+    memory "16 GB"
     input:
         tuple val(meta), path("input.pairs.gz"), path("fasta.fai")
     output:
@@ -40,6 +44,8 @@ process prepare_hic {
 
 process merge_pairs {
     label 'wfporec'
+    cpus 2
+    memory "2 GB"
     input:
         tuple val(meta), path('to_merge/{?}.gz')
     output:
@@ -55,6 +61,8 @@ process merge_pairs {
 
 process merge_pairs_stats {
     label 'wfporec'
+    cpus 2
+    memory "2 GB"
     input: 
         tuple val(meta), path('to_merge/src*.stats.txt')
     output: 
@@ -69,6 +77,8 @@ process merge_pairs_stats {
 
 process pair_stats_report {
     label 'wfporec'
+    cpus 2
+    memory "2 GB"
     input: 
         tuple val(meta), path("pairs.stats.txt")
     output:
@@ -82,6 +92,8 @@ process pair_stats_report {
 
 process create_restriction_bed {
     label 'wfporec'
+    cpus 2
+    memory "2 GB"
     input:
         tuple val(enzyme), path("reference.fasta"), path("reference.fasta.fai")
     output:
@@ -95,6 +107,8 @@ process create_restriction_bed {
 
 process pairsToCooler {
     label 'wfporec'
+    cpus 2
+    memory "2 GB"
     input:
         tuple val(meta), path(fai), path(pairs), val(min_bin_width)
     output:
@@ -107,6 +121,8 @@ process pairsToCooler {
 
 process merge_mcools {
     label 'wfporec'
+    cpus 2
+    memory "2 GB"
     input:
         tuple val(meta), path('to_merge/src*.cool'), val(resolutions)
     output:

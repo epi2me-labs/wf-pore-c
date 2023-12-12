@@ -1,5 +1,6 @@
 process index_ref_fai {
     label 'wfporec'
+    memory "16 GB"
     cpus 1
     input:
         path "reference.fasta"
@@ -12,6 +13,8 @@ process index_ref_fai {
 
 process index_ref_mmi {
     label 'wfporec'
+    memory "16 GB"
+    cpus 4
     input:
         path "reference.fasta"
         val(minimap_settings)
@@ -25,6 +28,7 @@ process index_ref_mmi {
 // NOTE -f required to compress symlink
 process decompress_ref {
     label 'wfporec'
+    memory "2 GB"
     cpus 1
     input:
         path compressed_ref
@@ -39,6 +43,8 @@ process decompress_ref {
 // This is the only way to publish files from a workflow whilst
 // decoupling the publish from the process steps.
 process publish_artifact {
+    cpus 1
+    memory "2 GB"
     label 'wfporec'
     publishDir "${params.out_dir}", mode: 'copy', pattern: "*"
     input:
@@ -50,25 +56,11 @@ process publish_artifact {
     """
 }
 
-// what is better, this or the one in input_check that uses porecpy? - that is actually being used.
-process chunk_bam {
-    label 'wfporec'
-    input:
-        tuple val(meta), path("concatemers.bam")
-        val chunk_size
-    output:
-        tuple val(meta), path "batches/*.bam"
-    shell:
-    """
-    mkdir batches
-    picard SplitSamByNumberOfReads I="concatemers.bam" OUTPUT=batches SPLIT_TO_N_READS=${chunk_size}
-    """
-}
-
 // TODO rewrite as single merge process
 process merge_namesorted_bams {
     label 'wfporec'
-    cpus params.threads
+    cpus 2
+    memory "2 GB"
     input:
         tuple val(meta), path('to_merge/src*.bam')
     output:
@@ -83,6 +75,8 @@ process merge_namesorted_bams {
 
 process merge_coordsorted_bams {
     label 'wfporec'
+    memory "4 GB"
+    cpus params.threads
     input:
         tuple val(meta), path('to_merge/src*.bam')
     output:
@@ -97,6 +91,7 @@ process merge_coordsorted_bams {
 process mosdepth_coverage {
     label 'wfporec'
     cpus params.threads
+    memory "2 GB"
     input:
         tuple val(meta),
               path("concatemers.cs.bam"),

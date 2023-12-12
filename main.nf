@@ -38,8 +38,9 @@ OPTIONAL_FILE = file("$projectDir/data/OPTIONAL_FILE")
 
 // bamindex will work with bam or fastq format file as input
 process index_bam {
-
     label "wfporec"
+    cpus 2
+    memory "8 GB"
     input:
         tuple val(meta), path("concatemers.bam")
         val chunk_size
@@ -57,6 +58,7 @@ process index_bam {
 process getVersions {
     label "wfporec"
     cpus 1
+    memory "2 GB"
     output:
         path "versions.txt"
     script:
@@ -74,6 +76,7 @@ process getVersions {
 process getParams {
     label "wfporec"
     cpus 1
+    memory "2 GB"
     output:
         path "params.json"
     script:
@@ -87,6 +90,8 @@ process getParams {
 
 process makeReport {
     label "wfporec"
+    cpus 2
+    memory "8 GB"
     input:
         val metadata
         path "per_read_stats/{?}.gz"
@@ -108,6 +113,28 @@ process makeReport {
     """
 }
 
+
+// See https://github.com/nextflow-io/nextflow/issues/1636. This is the only way to
+// publish files from a workflow whilst decoupling the publish from the process steps.
+// The process takes a tuple containing the filename and the name of a sub-directory to
+// put the file into. If the latter is `null`, puts it into the top-level directory.
+process output {
+    // publish inputs to output directory
+    label "wfporec"
+    cpus 1
+    memory "2 GB"
+    publishDir (
+        params.out_dir,
+        mode: "copy",
+        saveAs: { dirname ? "$dirname/$fname" : fname }
+    )
+    input:
+        tuple path(fname), val(dirname)
+    output:
+        path fname
+    """
+    """
+}
 
 // entrypointworkflow
 WorkflowMain.initialise(workflow, params, log)
@@ -139,7 +166,7 @@ workflow POREC {
             ])
         }
 
-        // create channel of input concatemers
+        // create channel of input chimeric reads
         input_reads = sample_data.map{meta,bam,reads -> [meta, bam]}
         if (params.chunk_size > 0) {
             chunks = index_bam(input_reads, channel.value(params.chunk_size))
@@ -328,11 +355,13 @@ workflow POREC {
             hi_c = prepare_hic(merge_pairs.out.merged_pairs.combine(ref.fai))
         }
 
+        stats = sample_data.map{ meta, samples, stats -> stats}.map{ [it, "ingress_results"] }
 
     emit:
         name_sorted_bam = ns_bam
         coord_sorted_bam = cs_bam
         report = report
+        stats = stats
 }
 
 workflow {
@@ -340,6 +369,7 @@ workflow {
         error = "`--params_sheet` parameter is deprecated. Use parameter `--sample_sheet` instead."
     }
     POREC()
+    output(POREC.out.stats)
 }
 
 workflow.onComplete {
