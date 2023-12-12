@@ -2,7 +2,8 @@
     "$schema": "http://json-schema.org/draft-07/schema",
     "$id": "https://raw.githubusercontent.com/./master/nextflow_schema.json",
     "title": "epi2me-labs/wf-pore-c",
-    "description": "Workflow for analysing Pore-c data.",
+    "workflow_title": "Pore-c Workflow",
+    "description": "Workflow for analysing Pore-c data for chromatin conformation capture.",
     "demo_url": "https://ont-exd-int-s3-euwst1-epi2me-labs.s3.amazonaws.com/wf-pore-c/wf-pore-c-demo.tar.gz",
     "aws_demo_url": "https://ont-exd-int-s3-euwst1-epi2me-labs.s3.amazonaws.com/wf-pore-c/wf-pore-c-demo/aws.nextflow.config",
     "url": "https://github.com/epi2me-labs/wf-pore-c",
@@ -23,7 +24,7 @@
                 },
                 "fastq": {
                     "type": "string",
-                    "format": "path",
+                    "format": "file-path",
                     "title": "FASTQ",
                     "description": "FASTQ files to use in the analysis.",
                     "help_text": "This accepts one of three cases: (i) the path to a single FASTQ file; (ii) the path to a top-level directory containing FASTQ files; (iii) the path to a directory containing one level of sub-directories which in turn contain FASTQ files. In the first and second case, a sample name can be supplied with `--sample`. In the last case, the data is assumed to be multiplexed with the names of the sub-directories as barcodes. In this case, a sample sheet can be provided with `--sample_sheet`."
@@ -114,7 +115,7 @@
             "properties": {
                 "chunk_size": {
                     "type": "integer",
-                    "default": 25000,
+                    "default": 10000,
                     "description": "Process input in chunks of this number of reads.",
                     "help_text": "To reduce per-process memory requirements for large datasets, process the inputs in chunks of reads. Set to 0 to process entire dataset in one go."
                 },
@@ -248,7 +249,8 @@
                 },
                 "version": {
                     "type": "boolean",
-                    "default": false
+                    "default": false,
+                    "hidden": true
                 }
             }
         }
@@ -299,8 +301,16 @@
             "type": "boolean"
         }
     },
-    "docs": {
-        "intro": "## Introduction\n\nPore-C is an end-to-end workflow unique to Oxford Nanopore which combines chromatin conformation capture (3C) with direct, long nanopore sequencing reads. With nanopore reads, long-range, multi-way contact information can be obtained.  Pore-C can be used to scaffold and improve the quality of existing genome assemblies to generate chromosome-scale assemblies, discover unique insights into the higher-order genome organisation of a species of interest, and reveal epigenetic information for a more comprehensive understanding of gene regulation. Find out more about the workflow [here](https://nanoporetech.com/about-us/news/pore-c-complete-end-end-workflow-chromatin-conformation-capture-published-nature)\n\nThis nextflow workflow will create virtual digests of the genome using the [pore-c-py package](https://github.com/epi2me-labs/pore-c-py), align the resulting monomers against a reference genome with [minimap2](https://github.com/lh3/minimap2) and then filter spurious alignments, detect ligation junctions and assign fragments. The resulting BAM alignment file can be used with downstream tools. \n\nOptionally the workflow can output a [pairs format](https://github.com/4dn-dcic/pairix/blob/master/pairs_format_specification.md) report which uses [pairtools](https://github.com/open2c/pairtools).\n",
-        "links": "## Useful links\n\n* [nextflow](https://www.nextflow.io/)\n* [docker](https://www.docker.com/products/docker-desktop)\n* [pore-c-py](https://github.com/epi2me-labs/pore-c-py)\n* [minimap2](https://github.com/lh3/minimap2)\n* [pairtools](https://github.com/open2c/pairtools)\n* [Pore-C](https://nanoporetech.com/resource-centre/porec): multi-contact, chromosome conformation capture for both genome-wide and targeted analyses.\n* Visit the [Nanopore Community](https://community.nanoporetech.com/info_sheets/restriction-enzyme-pore-c/v/rpc_s1015_v1_revf_12nov2019) for guidance through every step of the Pore-C workflow. Optimised Nanopore workflows have been developed: blood samples, [plants](https://nanoporetech.com/sites/default/files/s3/literature/plant-pore-c-workflow.pdf), and cell culture, animal, or insect tissues \u2013 the method is simple and scalable.\n\n\n### References\n\nDeshpande, A.S., Ulahannan, N., Pendleton, M. et al. Identifying synergistic high-order 3D chromatin conformations from genome-scale nanopore concatemer sequencing. Nat Biotechnol (2022). https://doi.org/10.1038/s41587-022-01289-z: https://www.nature.com/articles/s41587-022-01289-z  "
+    "resources": {
+        "recommended": {
+            "cpus": 64,
+            "memory": "256GB"
+        },
+        "minimum": {
+            "cpus": 8,
+            "memory": "32GB"
+        },
+        "run_time": "24 hours for 100GB input BAM using the recommended resources, this will vary depending on number of monomers found per read.",
+        "arm_support": false
     }
 }

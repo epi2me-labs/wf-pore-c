@@ -9,12 +9,13 @@ variables:
     # The workflow should define `--out_dir`, the CI template sets this.
     # Only common file inputs and option values need to be given here
     # (not things such as -profile)
-    NF_WORKFLOW_OPTS: "--bam test_data/porec_test.concatemers.bam --chunk_size 100 --ref \
-    test_data/porec_test.fasta \
+    NF_BEFORE_SCRIPT: "wget -O wf-pore-c-demo.tar.gz https://ont-exd-int-s3-euwst1-epi2me-labs.s3.amazonaws.com/wf-pore-c/wf-pore-c-demo.tar.gz && tar -xzvf wf-pore-c-demo.tar.gz"
+    NF_WORKFLOW_OPTS: "-executor.\\$$local.memory 32GB \
+    --bam wf-pore-c-demo/porec_test.concatemers.bam --chunk_size 100 --ref \
+    wf-pore-c-demo/porec_test.fasta \
     --cutter NlaIII \
-    --vcf test_data/porec_test.phased_variants.vcf.gz --pairs \
-    --chromunity --paired_end --filter_pairs --paired_end_minimum_distance 100 \
-    --paired_end_maximum_distance 200 "
+    --vcf wf-pore-c-demo/porec_test.phased_variants.vcf.gz \
+    --paired_end_minimum_distance 100 --paired_end_maximum_distance 200 --hi_c --mcool"
     CI_FLAVOUR: "new"
 
 macos-run:
@@ -26,13 +27,14 @@ docker-run:
     parallel:
         matrix:
             - MATRIX_NAME: [
-                "no-sample-sheet-chunk", "sample-sheet", "fastq", "chromunity", "input-dir-hic"]
+                "no-sample-sheet-chunk", "sample-sheet", "fastq", "chromunity", "input-dir-hic", "demo"]
     rules:
         - if: ($CI_COMMIT_BRANCH == null || $CI_COMMIT_BRANCH == "dev-template")
           when: never
         - if: $MATRIX_NAME == "no-sample-sheet-chunk"
           variables:
-            NF_WORKFLOW_OPTS: "--bam test_data/porec_test.concatemers.bam --chunk_size 100 --ref \
+            NF_WORKFLOW_OPTS: "-executor.\\$$local.memory 32GB \
+            --bam test_data/porec_test.concatemers.bam --chunk_size 100 --ref \
             test_data/porec_test.fasta \
             --cutter NlaIII \
             --vcf test_data/porec_test.phased_variants.vcf.gz --pairs \
@@ -40,7 +42,8 @@ docker-run:
             --paired_end_maximum_distance 200"
         - if: $MATRIX_NAME == "sample-sheet"
           variables:
-            NF_WORKFLOW_OPTS: "--bam test_data/bams --ref \
+            NF_WORKFLOW_OPTS: "-executor.\\$$local.memory 32GB \
+            --bam test_data/bams --ref \
             test_data/porec_test.fasta \
             --pairs --chunk_size 0 \
             --chromunity --paired_end --filter_pairs --paired_end_minimum_distance 100 \
@@ -48,7 +51,8 @@ docker-run:
             NF_IGNORE_PROCESSES: "index_bam" 
         - if: $MATRIX_NAME == "input-dir-hic"
           variables:
-            NF_WORKFLOW_OPTS: "--bam test_data/bams_dir --chunk_size 500 --ref \
+            NF_WORKFLOW_OPTS: "-executor.\\$$local.memory 32GB \
+            --bam test_data/bams_dir --chunk_size 500 --ref \
             test_data/porec_test.fasta \
             --cutter NlaIII \
             --vcf test_data/porec_test.phased_variants.vcf.gz \
@@ -56,7 +60,8 @@ docker-run:
             --paired_end_maximum_distance 200 --hi_c"
         - if: $MATRIX_NAME == "fastq"
           variables:
-            NF_WORKFLOW_OPTS: "--fastq test_data/porec_test.concatemers.fastq --ref \
+            NF_WORKFLOW_OPTS: "-executor.\\$$local.memory 32GB \
+            --fastq test_data/porec_test.concatemers.fastq --ref \
             test_data/porec_test.fasta \
             --cutter NlaIII \
             --vcf test_data/porec_test.phased_variants.vcf.gz --pairs \
@@ -65,10 +70,20 @@ docker-run:
             NF_IGNORE_PROCESSES: "index_bam"
         - if: $MATRIX_NAME == "chromunity"
           variables:
-            NF_WORKFLOW_OPTS: "--fastq test_data/porec_test.concatemers.fastq --ref \
+            NF_WORKFLOW_OPTS: "-executor.\\$$local.memory 32GB \
+            --fastq test_data/porec_test.concatemers.fastq --ref \
             test_data/porec_test.fasta \
             --mcool_resolutions 1000,2000,3000 --cutter NlaIII \
             --vcf test_data/porec_test.phased_variants.vcf.gz --pairs \
             --chromunity --paired_end --filter_pairs --paired_end_minimum_distance 100 \
             --paired_end_maximum_distance 200 --chromunity --chromunity_merge_distance 5 --mcool"
             NF_IGNORE_PROCESSES: "index_bam"
+        - if: $MATRIX_NAME == "demo"
+          variables:
+                NF_BEFORE_SCRIPT: "wget -O wf-pore-c-demo.tar.gz https://ont-exd-int-s3-euwst1-epi2me-labs.s3.amazonaws.com/wf-pore-c/wf-pore-c-demo.tar.gz && tar -xzvf wf-pore-c-demo.tar.gz"
+                NF_WORKFLOW_OPTS: "-executor.\\$$local.memory 32GB \
+                --bam wf-pore-c-demo/porec_test.concatemers.bam --chunk_size 100 --ref \
+                wf-pore-c-demo/porec_test.fasta \
+                --cutter NlaIII \
+                --vcf wf-pore-c-demo/porec_test.phased_variants.vcf.gz \
+                --paired_end_minimum_distance 100 --paired_end_maximum_distance 200 --hi_c --mcool --paired_end"
