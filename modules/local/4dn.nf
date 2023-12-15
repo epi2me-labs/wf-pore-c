@@ -36,7 +36,7 @@ process prepare_hic {
     cut -f1,2 fasta.fai > sizes.genome
     pairtools flip input.pairs.gz -c sizes.genome  > flipped.pairs.tmp
     pairtools sort flipped.pairs.tmp > sorted.pairs.tmp
-    pairtools dedup sorted.pairs.tmp > dedup.pairs.tmp
+    pairtools dedup --chunksize ${params.pairtools_chunksize} sorted.pairs.tmp > dedup.pairs.tmp
     java -jar /home/epi2melabs/juicer_tools_1.22.01.jar pre dedup.pairs.tmp "${meta.sample_id}.hic" sizes.genome
     rm -rf "*.pairs.tmp"
     """

@@ -179,6 +179,12 @@
                     "description": "Create a 4DN-format pairs file (also calculate stats).",
                     "help_text": "Outputs a directory with a pairs stats report and a pairs file which can be used for downstream anaylsis."
                 },
+                "pairtools_chunksize": {
+                    "type": "integer",
+                    "default": 100000,
+                    "description": "Number of pairs to be processed in each chunk in the prepare_hic process which uses the pairtools dedup tool.",
+                    "help_text": "Reduce for lower memory footprint. Below 10,000 performance starts suffering significantly."
+                },
                 "mcool": {
                     "type": "boolean",
                     "default": false,
