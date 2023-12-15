@@ -50,6 +50,7 @@
 | Nextflow parameter name  | Type | Description | Help | Default |
 |--------------------------|------|-------------|------|---------|
 | pairs | boolean | Create a 4DN-format pairs file (also calculate stats). | Outputs a directory with a pairs stats report and a pairs file which can be used for downstream anaylsis. | False |
+| pairtools_chunksize | integer | Number of pairs to be processed in each chunk in the prepare_hic process which uses the pairtools dedup tool. | Reduce for lower memory footprint. Below 10,000 performance starts suffering significantly. | 100000 |
 | mcool | boolean | Create a multi-resolution cooler file. Will output the cooler formatted file which you can load with cooler. | see 'https://open2c.github.io/cooler' for more details. | False |
 | cool_bin_size | integer | The bin size of the cooler output file in base pairs. | see 'https://open2c.github.io/cooler' for more details. | 1000 |
 | mcool_resolutions | string | The resolutions of the mcool file in pixels (see cooler documentation for details). | Comma-separated list of target resolutions. Use suffixes B or N to specify a progression: B for binary (geometric steps of factor 2), N for nice (geometric steps of factor 10 interleaved with steps of 2 and 5). This is the equivalent of the `--resolutions` flag in cooler; see an example here 'https://cooler.readthedocs.io/en/latest/cli.html'. | 1000,2000,5000N |
