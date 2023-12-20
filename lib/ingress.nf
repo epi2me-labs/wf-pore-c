@@ -149,13 +149,12 @@ def xam_ingress(Map arguments)
 
     def input = get_valid_inputs(margs, xam_extensions)
 
+    // check BAM headers to see if any samples are uBAM
     ch_result = input.dirs
     | map { meta, path -> [meta, get_target_files_in_dir(path, xam_extensions)] }
     | mix(input.files)
-
-    ch_is_unaligned = ch_result
     | checkBamHeaders
-    | map { meta, is_unaligned_env, mixed_headers_env ->
+    | map { meta, paths, is_unaligned_env, mixed_headers_env ->
         // convert the env. variables from strings ('0' or '1') into bools
         boolean is_unaligned = is_unaligned_env as int as boolean
         boolean mixed_headers = mixed_headers_env as int as boolean
@@ -163,14 +162,11 @@ def xam_ingress(Map arguments)
         if (mixed_headers) {
             error "Found mixed headers in (u)BAM files of sample '${meta.alias}'."
         }
-        [meta, is_unaligned]
+        // add `is_unaligned` to the metamap (note the use of `+` to create a copy of
+        // `meta` to avoid modifying every item in the channel;
+        // https://github.com/nextflow-io/nextflow/issues/2660)
+        [meta + [is_unaligned: is_unaligned], paths]
     }
-
-    ch_result = ch_result | join(ch_is_unaligned)
-    // add `is_unaligned` to the metamap (note the use of `+` to create a copy of `meta`
-    // to avoid modifying every item in the channel;
-    // https://github.com/nextflow-io/nextflow/issues/2660)
-    | map { meta, paths, is_unaligned -> [meta + [is_unaligned: is_unaligned], paths] }
     | branch { meta, paths ->
         // set `paths` to `null` for uBAM samples if unallowed (they will be added to
         // the results channel in shape of `[meta, null]` at the end of the function
@@ -245,7 +241,12 @@ process checkBamHeaders {
     output:
         // set the two env variables by `eval`-ing the output of the python script
         // checking the XAM headers
-        tuple val(meta), env(IS_UNALIGNED), env(MIXED_HEADERS)
+        tuple(
+            val(meta),
+            path("input_dir/reads*.bam", includeInputs: true),
+            env(IS_UNALIGNED),
+            env(MIXED_HEADERS),
+        )
     script:
     """
     workflow-glue check_bam_headers_in_dir input_dir > env.vars
