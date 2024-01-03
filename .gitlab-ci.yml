@@ -15,7 +15,7 @@ variables:
     wf-pore-c-demo/porec_test.fasta \
     --cutter NlaIII \
     --vcf wf-pore-c-demo/porec_test.phased_variants.vcf.gz \
-    --paired_end_minimum_distance 100 --paired_end_maximum_distance 200 --hi_c --mcool"
+    --paired_end_minimum_distance 100 --paired_end_maximum_distance 200 --hi_c --mcool --bed"
     CI_FLAVOUR: "new"
 
 macos-run:

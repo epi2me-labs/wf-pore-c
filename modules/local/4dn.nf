@@ -135,3 +135,23 @@ process merge_mcools {
     cooler zoomify -r ${resolutions} -o ${prefix}.mcool  ${prefix}.cool
     """
 }
+
+
+process createBed {
+    label 'wfporec'
+    cpus 2
+    memory "8 GB"
+    input:
+        tuple val(meta), path("monomers.mm2.ns.bam")
+    output:
+        tuple val(meta), path("${meta.alias}.bed")
+    // Use Sed to remove coordinates from monomer names
+    // as only required for pairtools.
+    // Sort and remove any duplicates.
+    """
+    bedtools bamtobed -i monomers.mm2.ns.bam > tmp.out.bed
+    sed -E 's/:[0-9]+//g' tmp.out.bed > tmp.renamed.bed
+    sort -k4,4 tmp.renamed.bed | uniq > "${meta.alias}.bed"
+    rm -rf tmp*
+    """
+}
