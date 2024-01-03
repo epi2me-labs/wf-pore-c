@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [unreleased]
 ### Added
+- Added `--bed` parameter which if set to true will output a BED file that is compatible with downstream tools including the scaffolder [Yahs](https://github.com/c-zhou/yahs).
 - Added `--pairtools_chunksize` parameter which exposes pairtools dedup chunksize parameter, in case peak memory usage of hi_c process needs to be reduced.
 
 ## [v1.0.0]

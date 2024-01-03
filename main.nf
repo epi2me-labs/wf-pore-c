@@ -29,6 +29,7 @@ include {
    create_restriction_bed
    pair_stats_report
    prepare_hic
+   createBed
 } from './modules/local/4dn'
 
 
@@ -355,6 +356,10 @@ workflow POREC {
             hi_c = prepare_hic(merge_pairs.out.merged_pairs.combine(ref.fai))
         }
 
+        if (params.bed){
+            createBed(ns_bam)
+        }
+      
         stats = sample_data.map{ meta, samples, stats -> stats}.map{ [it, "ingress_results"] }
 
     emit:
