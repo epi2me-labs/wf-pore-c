@@ -307,14 +307,18 @@ process bamstats {
     input:
         tuple val(meta), path("reads.bam")
     output:
-        tuple val(meta), path("reads.bam"), path("bamstats_results")
+        tuple val(meta),
+              path("reads.bam"),
+              path("bamstats_results")
     script:
         def bamstats_threads = Math.max(1, task.cpus - 1)
     """
     mkdir bamstats_results
     bamstats reads.bam -s $meta.alias -u \
         -f bamstats_results/bamstats.flagstat.tsv -t $bamstats_threads \
+        --histograms histograms \
     | bgzip > bamstats_results/bamstats.readstats.tsv.gz
+    mv histograms/* bamstats_results/
 
     # extract the run IDs from the per-read stats
     csvtk cut -tf runid bamstats_results/bamstats.readstats.tsv.gz \
@@ -451,7 +455,9 @@ process fastcat {
         tuple val(meta), path("input")
         val extra_args
     output:
-        tuple val(meta), path("seqs.fastq.gz"), path("fastcat_stats")
+        tuple val(meta),
+              path("seqs.fastq.gz"),
+              path("fastcat_stats")
     script:
         String out = "seqs.fastq.gz"
         String fastcat_stats_outdir = "fastcat_stats"
@@ -461,10 +467,12 @@ process fastcat {
             -s ${meta["alias"]} \
             -r >(bgzip -c > $fastcat_stats_outdir/per-read-stats.tsv.gz) \
             -f $fastcat_stats_outdir/per-file-stats.tsv \
+            --histograms histograms \
             $extra_args \
             input \
             | bgzip > $out
 
+        mv histograms/* $fastcat_stats_outdir
         # extract the run IDs from the per-read stats
         csvtk cut -tf runid $fastcat_stats_outdir/per-read-stats.tsv.gz \
         | csvtk del-header | sort | uniq > $fastcat_stats_outdir/run_ids
