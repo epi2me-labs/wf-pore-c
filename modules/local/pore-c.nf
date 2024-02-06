@@ -1,11 +1,13 @@
 process digest_align_annotate {
+    label 'pore_c_py'
     errorStrategy = 'retry'
-    maxRetries 3
+    memory { 15.GB * task.attempt }
+    maxRetries 1
+    errorStrategy { task.exitStatus in 137..140 ? 'retry' : 'terminate' }
     cpus params.threads
-    memory "32 GB"
-    label 'wfporec'
     input:
-        tuple val(meta), path("concatemers.bam"),
+        tuple val(meta), 
+            path("concatemers.bam"),
             path("concatemers.bam.bci"),
             val(ref), path("reference.fasta.mmi"),
             val(minimap2_settings)
@@ -23,6 +25,9 @@ process digest_align_annotate {
         tuple val(meta),
             path("${meta.alias}.pe.bam"),
             emit: paired_end_bam, optional: true
+        tuple val(meta),
+            path("filtered_reads.txt"),
+            emit: filtered_read_ids, optional: true
     script:
         args = task.ext.args ?: " "
         if (params.chromunity) {
@@ -57,25 +62,27 @@ process digest_align_annotate {
             """
             echo "${ref}"
             bamindex fetch --chunk=${chunk} "concatemers.bam" |
-            pore-c-py digest "${meta.cutter}" --header "concatemers.bam" \
-            --threads ${digest_annotate_threads} |
+                pore-c-py digest "${meta.cutter}" --max_monomers ${params.max_monomers} --excluded_list "filtered_reads.txt" \
+                --header "concatemers.bam" \
+                --threads ${digest_annotate_threads} |
             samtools fastq --threads 1 -T '*' |
             minimap2 -ay -t ${ubam_map_threads} ${minimap2_settings} \
-            "reference.fasta.mmi" - |
+                "reference.fasta.mmi" - |
             pore-c-py annotate - "${meta.alias}" --monomers \
-            --threads ${digest_annotate_threads}  --stdout true ${args} | \
+                --threads ${digest_annotate_threads}  --stdout ${args} | \
             tee "${meta.alias}_out.ns.bam" |
             samtools sort -m 1G --threads ${samtools_threads}  -u --write-index -o "${meta.alias}.cs.bam" -  
             """  
         }else{
             """
-            pore-c-py digest "concatemers.bam" "${meta.cutter}" --header "concatemers.bam" \
-            --threads ${digest_annotate_threads} | 
+            pore-c-py digest "concatemers.bam" "${meta.cutter}" --max_monomers ${params.max_monomers} --excluded_list "filtered_reads.txt" \
+                --header "concatemers.bam" \
+                --threads ${digest_annotate_threads} | 
             samtools fastq --threads 1 -T '*' |
             minimap2 -ay -t ${ubam_map_threads} ${minimap2_settings} \
-            "reference.fasta.mmi" - |
+                "reference.fasta.mmi" - |
             pore-c-py annotate - "${meta.alias}" --monomers \
-            --threads ${digest_annotate_threads}  --stdout true ${args} | \
+                --threads ${digest_annotate_threads}  --stdout ${args} | \
             tee "${meta.alias}_out.ns.bam" |
             samtools sort -m 1G --threads ${samtools_threads}  -u --write-index -o "${meta.alias}.cs.bam" -  
             """  
@@ -86,7 +93,7 @@ process digest_align_annotate {
 process haplotagReads {
     label 'wfporec'
     cpus 2
-    memory "16 GB"
+    memory "15 GB"
     input:
         tuple val(meta),
             path("concatemers.cs.bam"),
@@ -116,7 +123,7 @@ process haplotagReads {
 process merge_parquets_to_dataset {
     label 'wfporec'
     cpus 2
-    memory "2 GB"
+    memory "4 GB"
     input:
     tuple val(meta),
           path("to_merge/part?????.parquet")

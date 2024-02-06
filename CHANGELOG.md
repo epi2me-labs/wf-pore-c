@@ -4,10 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [unreleased]
+## [v1.1.0]
 ### Added
-- Added `--bed` parameter which if set to true will output a BED file that is compatible with downstream tools including the scaffolder [Yahs](https://github.com/c-zhou/yahs).
-- Added `--pairtools_chunksize` parameter which exposes pairtools dedup chunksize parameter, in case peak memory usage of hi_c process needs to be reduced.
+- `--bed` parameter which if set to true will output a BED file that is compatible with downstream tools including the scaffolder [Yahs](https://github.com/c-zhou/yahs).
+- `--pairtools_chunksize` parameter which exposes pairtools dedup chunksize parameter, in case peak memory usage of hi_c process needs to be reduced.
+- `digest_align_annotate` process uses dedicated pore_c_py container.
+- `--max_monomers` parameter, which is set to 250 by default, will filter out any reads that have more than this number of monomers. These reads will not be included in the analysis.
+- Output a `filtered_out/{alias}.bam` with any reads that are filtered out due to the max_monomers parameter.
 
 ## [v1.0.0]
 ### Changed

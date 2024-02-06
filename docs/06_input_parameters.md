@@ -25,7 +25,7 @@
 
 | Nextflow parameter name  | Type | Description | Help | Default |
 |--------------------------|------|-------------|------|---------|
-| chunk_size | integer | Process input in chunks of this number of reads. | To reduce per-process memory requirements for large datasets, process the inputs in chunks of reads. Set to 0 to process entire dataset in one go. | 10000 |
+| chunk_size | integer | Process input in chunks of this number of reads. | To reduce per-process memory requirements for large datasets, process the inputs in chunks of reads. Set to 0 to process entire dataset in one go. | 20000 |
 | threads | integer | Set maximum number of threads to use for more intense processes (limited by config executor cpus). We recommend a minimum of 4, but if available 19. |  | 4 |
 
 
@@ -34,6 +34,7 @@
 | Nextflow parameter name  | Type | Description | Help | Default |
 |--------------------------|------|-------------|------|---------|
 | minimap2_settings | string | The minimap2 settings for mapping monomers |  | -x map-ont |
+| max_monomers | integer | The maximum number of monomers allowed for a read to be included in downstream analysis. |  | 250 |
 | coverage | boolean | Calculate restriction-fragment coverage using mosdepth |  | False |
 | summary_json | boolean | Output pore-c-py annotation summary in json format. |  | True |
 

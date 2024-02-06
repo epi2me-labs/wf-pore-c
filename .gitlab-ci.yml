@@ -47,7 +47,8 @@ docker-run:
             test_data/porec_test.fasta \
             --pairs --chunk_size 0 \
             --chromunity --paired_end --filter_pairs --paired_end_minimum_distance 100 \
-            --paired_end_maximum_distance 200 --sample_sheet test_data/sample_sheet.csv"
+            --paired_end_maximum_distance 200 --sample_sheet test_data/sample_sheet.csv \
+            --max_monomers 8"
             NF_IGNORE_PROCESSES: "index_bam" 
         - if: $MATRIX_NAME == "input-dir-hic"
           variables:

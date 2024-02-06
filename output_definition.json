@@ -135,6 +135,14 @@
       "mime-type": "application/octet-stream",
       "optional": true,
       "type": "per-sample"
+    },
+    "filtered_out": {
+      "filepath": "./filtered_out/{{ alias }}.bam",
+      "title": "Filtered out reads",
+      "description": "BAM file containing any reads that were filtered out at the digest step and not included in the analysis.",
+      "mime-type": "application/octet-stream",
+      "optional": true,
+      "type": "per-sample"
     }
   }
 }
