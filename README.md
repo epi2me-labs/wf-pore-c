@@ -29,14 +29,14 @@ This workflow can be used for the following:
 Recommended requirements:
 
 + CPUs = 64
-+ Memory = 256GB
++ Memory = 128GB
 
 Minimum requirements:
 
 + CPUs = 8
 + Memory = 32GB
 
-Approximate run time: 24 hours for 100GB input BAM using the recommended resources, this will vary depending on number of monomers found per read.
+Approximate run time: 12 hours for 100GB input BAM using the recommended resources, this will vary depending on number of monomers found per read.
 
 ARM processor support: False
 
@@ -143,7 +143,7 @@ input_reads.fastq   ─── input_directory  ─── input_directory
 
 | Nextflow parameter name  | Type | Description | Help | Default |
 |--------------------------|------|-------------|------|---------|
-| chunk_size | integer | Process input in chunks of this number of reads. | To reduce per-process memory requirements for large datasets, process the inputs in chunks of reads. Set to 0 to process entire dataset in one go. | 10000 |
+| chunk_size | integer | Process input in chunks of this number of reads. | To reduce per-process memory requirements for large datasets, process the inputs in chunks of reads. Set to 0 to process entire dataset in one go. | 20000 |
 | threads | integer | Set maximum number of threads to use for more intense processes (limited by config executor cpus). We recommend a minimum of 4, but if available 19. |  | 4 |
 
 
@@ -152,6 +152,7 @@ input_reads.fastq   ─── input_directory  ─── input_directory
 | Nextflow parameter name  | Type | Description | Help | Default |
 |--------------------------|------|-------------|------|---------|
 | minimap2_settings | string | The minimap2 settings for mapping monomers |  | -x map-ont |
+| max_monomers | integer | The maximum number of monomers allowed for a read to be included in downstream analysis. |  | 250 |
 | coverage | boolean | Calculate restriction-fragment coverage using mosdepth |  | False |
 | summary_json | boolean | Output pore-c-py annotation summary in json format. |  | True |
 
@@ -219,6 +220,7 @@ Output files may be aggregated including information for all samples or provided
 | Chromunity parquet files. | ./chromunity | Chromunity directory with parquet files which can be used with the Chromunity package. Chromunity enables the nomination and statistical evaluation of high order interactions. See [Chromunity documentation](http://mskilab.com/chromunity/tutorial.html) for further details. | per-sample |
 | Fragments BED | ./paireds/fragments.bed | File with the DNA fragments created from the virtual digest. | per-sample |
 | Hi-C for contact map | ./hi-c/{{ alias }}.hic | File which can be loaded into the [Juice box tool](https://www.aidenlab.org/juicebox/) for an alternative contact map visualisation. | per-sample |
+| Filtered out reads | ./filtered_out/{{ alias }}.bam | BAM file containing any reads that were filtered out at the digest step and not included in the analysis. | per-sample |
 
 
 
@@ -239,7 +241,7 @@ The reads are indexed in chunks for parallel processing using the `chunk_size` p
 
 ### 4. Digest Reads
 
-Chimeric Pore-C reads are digested using the [Pore-c-py](https://github.com/epi2me-labs/pore-c-py) python package. The enzyme provided to the `cutter` parameter will be used by the Pore-c-py package to find the corresponding sequence using the [Biopython](https://biopython.org/) restriction enzymes library.
+Chimeric Pore-C reads are digested using the [Pore-c-py](https://github.com/epi2me-labs/pore-c-py) python package. The enzyme provided to the `cutter` parameter will be used by the Pore-c-py package to find the corresponding sequence using the [Biopython](https://biopython.org/) restriction enzymes library. Any reads containing more than `max_monomers` (default: 250) will be excluded at this stage as they are assumed to have been created in error.
 
 ### 5. Align Reads
 

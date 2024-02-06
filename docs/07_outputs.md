@@ -19,3 +19,4 @@ Output files may be aggregated including information for all samples or provided
 | Chromunity parquet files. | ./chromunity | Chromunity directory with parquet files which can be used with the Chromunity package. Chromunity enables the nomination and statistical evaluation of high order interactions. See [Chromunity documentation](http://mskilab.com/chromunity/tutorial.html) for further details. | per-sample |
 | Fragments BED | ./paireds/fragments.bed | File with the DNA fragments created from the virtual digest. | per-sample |
 | Hi-C for contact map | ./hi-c/{{ alias }}.hic | File which can be loaded into the [Juice box tool](https://www.aidenlab.org/juicebox/) for an alternative contact map visualisation. | per-sample |
+| Filtered out reads | ./filtered_out/{{ alias }}.bam | BAM file containing any reads that were filtered out at the digest step and not included in the analysis. | per-sample |

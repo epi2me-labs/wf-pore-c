@@ -12,7 +12,7 @@ The reads are indexed in chunks for parallel processing using the `chunk_size` p
 
 ### 4. Digest Reads
 
-Chimeric Pore-C reads are digested using the [Pore-c-py](https://github.com/epi2me-labs/pore-c-py) python package. The enzyme provided to the `cutter` parameter will be used by the Pore-c-py package to find the corresponding sequence using the [Biopython](https://biopython.org/) restriction enzymes library.
+Chimeric Pore-C reads are digested using the [Pore-c-py](https://github.com/epi2me-labs/pore-c-py) python package. The enzyme provided to the `cutter` parameter will be used by the Pore-c-py package to find the corresponding sequence using the [Biopython](https://biopython.org/) restriction enzymes library. Any reads containing more than `max_monomers` (default: 250) will be excluded at this stage as they are assumed to have been created in error.
 
 ### 5. Align Reads
 

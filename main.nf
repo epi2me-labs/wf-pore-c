@@ -13,6 +13,7 @@ include {
     merge_namesorted_bams as merge_paired_end_bams
     merge_coordsorted_bams
     mosdepth_coverage
+    get_filtered_out_bam
 } from './modules/local/common'
 
 include {
@@ -40,7 +41,7 @@ OPTIONAL_FILE = file("$projectDir/data/OPTIONAL_FILE")
 // bamindex will work with bam or fastq format file as input
 process index_bam {
     label "wfporec"
-    cpus 2
+    cpus 4
     memory "8 GB"
     input:
         tuple val(meta), path("concatemers.bam")
@@ -58,8 +59,8 @@ process index_bam {
 
 process getVersions {
     label "wfporec"
-    cpus 1
-    memory "2 GB"
+    cpus 4
+    memory "4 GB"
     output:
         path "versions.txt"
     script:
@@ -77,7 +78,7 @@ process getVersions {
 process getParams {
     label "wfporec"
     cpus 1
-    memory "2 GB"
+    memory "4 GB"
     output:
         path "params.json"
     script:
@@ -91,8 +92,8 @@ process getParams {
 
 process makeReport {
     label "wfporec"
-    cpus 2
-    memory "8 GB"
+    cpus 4
+    memory "15 GB"
     input:
         val metadata
         path "per_read_stats/{?}.gz"
@@ -123,7 +124,7 @@ process output {
     // publish inputs to output directory
     label "wfporec"
     cpus 1
-    memory "2 GB"
+    memory "4 GB"
     publishDir (
         params.out_dir,
         mode: "copy",
@@ -361,6 +362,14 @@ workflow POREC {
         }
       
         stats = sample_data.map{ meta, samples, stats -> stats}.map{ [it, "ingress_results"] }
+        // Group together lists of filtered reads from all the processed chunks
+        named_filtered_read_ids = ch_annotated_monomers.filtered_read_ids.groupTuple().map{ meta, read_ids -> tuple(meta.alias, read_ids)}
+        named_reads = input_reads.map{ meta, reads -> tuple(meta.alias, reads)}
+        // Combine with input reads
+        filtered_reads = named_filtered_read_ids.join(named_reads, remainder:false)
+        // Retrieve filtered out BAM from list of filtered reads per sample
+        filtered_out = get_filtered_out_bam(filtered_reads)
+
 
     emit:
         name_sorted_bam = ns_bam

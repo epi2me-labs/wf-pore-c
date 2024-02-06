@@ -123,7 +123,7 @@
             "properties": {
                 "chunk_size": {
                     "type": "integer",
-                    "default": 10000,
+                    "default": 20000,
                     "description": "Process input in chunks of this number of reads.",
                     "help_text": "To reduce per-process memory requirements for large datasets, process the inputs in chunks of reads. Set to 0 to process entire dataset in one go."
                 },
@@ -145,6 +145,12 @@
                     "type": "string",
                     "default": "-x map-ont",
                     "description": "The minimap2 settings for mapping monomers"
+                },
+                "max_monomers": {
+                    "type": "integer",
+                    "default": 250,
+                    "description": "The maximum number of monomers allowed for a read to be included in downstream analysis.",
+                    "help": "Any reads that have more than this number will be filtered out, and output in a per sample filtered_bam file."
                 },
                 "coverage": {
                     "type": "boolean",
@@ -318,13 +324,13 @@
     "resources": {
         "recommended": {
             "cpus": 64,
-            "memory": "256GB"
+            "memory": "128GB"
         },
         "minimum": {
             "cpus": 8,
             "memory": "32GB"
         },
-        "run_time": "24 hours for 100GB input BAM using the recommended resources, this will vary depending on number of monomers found per read.",
+        "run_time": "12 hours for 100GB input BAM using the recommended resources, this will vary depending on number of monomers found per read.",
         "arm_support": false
     }
 }

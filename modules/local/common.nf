@@ -1,6 +1,6 @@
 process index_ref_fai {
     label 'wfporec'
-    memory "16 GB"
+    memory "15 GB"
     cpus 1
     input:
         path "reference.fasta"
@@ -13,7 +13,7 @@ process index_ref_fai {
 
 process index_ref_mmi {
     label 'wfporec'
-    memory "16 GB"
+    memory "15 GB"
     cpus 4
     input:
         path "reference.fasta"
@@ -28,7 +28,7 @@ process index_ref_mmi {
 // NOTE -f required to compress symlink
 process decompress_ref {
     label 'wfporec'
-    memory "2 GB"
+    memory "4 GB"
     cpus 1
     input:
         path compressed_ref
@@ -44,7 +44,7 @@ process decompress_ref {
 // decoupling the publish from the process steps.
 process publish_artifact {
     cpus 1
-    memory "2 GB"
+    memory "4 GB"
     label 'wfporec'
     publishDir "${params.out_dir}", mode: 'copy', pattern: "*"
     input:
@@ -60,7 +60,7 @@ process publish_artifact {
 process merge_namesorted_bams {
     label 'wfporec'
     cpus 2
-    memory "2 GB"
+    memory "4 GB"
     input:
         tuple val(meta), path('to_merge/src*.bam')
     output:
@@ -75,7 +75,7 @@ process merge_namesorted_bams {
 
 process merge_coordsorted_bams {
     label 'wfporec'
-    memory "4 GB"
+    memory "8 GB"
     cpus params.threads
     input:
         tuple val(meta), path('to_merge/src*.bam')
@@ -91,7 +91,7 @@ process merge_coordsorted_bams {
 process mosdepth_coverage {
     label 'wfporec'
     cpus params.threads
-    memory "2 GB"
+    memory "4 GB"
     input:
         tuple val(meta),
               path("concatemers.cs.bam"),
@@ -117,5 +117,21 @@ process mosdepth_coverage {
         args = task.ext.args ?: "--thresholds 1,10,30,60,100"
     """
     mosdepth --threads $task.cpus --d4 --by "fragments.bed" $args $prefix "concatemers.cs.bam"
+    """
+}
+
+
+process get_filtered_out_bam{
+    label "wfporec"
+    cpus 1
+    memory "15 GB"
+    input:
+        tuple val(alias), path ("filtered_files/?.txt"), path("concatemers.bam")
+    output:
+        path ("${alias}.filtered_out.bam")
+    // Output the list of reads that were filtered out of the analysis in a BAM. 
+    """
+    find -L filtered_files -name '*.txt' -exec cat {} + > filtered.txt
+    samtools view -N filtered.txt "concatemers.bam" > "${alias}".filtered_out.bam
     """
 }
