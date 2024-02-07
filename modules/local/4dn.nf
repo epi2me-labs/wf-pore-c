@@ -45,7 +45,7 @@ process prepare_hic {
 process merge_pairs {
     label 'wfporec'
     cpus 2
-    memory "2 GB"
+    memory "8 GB"
     input:
         tuple val(meta), path('to_merge/{?}.gz')
     output:
