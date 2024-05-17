@@ -9,13 +9,13 @@ variables:
     # The workflow should define `--out_dir`, the CI template sets this.
     # Only common file inputs and option values need to be given here
     # (not things such as -profile)
-    NF_BEFORE_SCRIPT: "wget -O wf-pore-c-demo.tar.gz https://ont-exd-int-s3-euwst1-epi2me-labs.s3.amazonaws.com/wf-pore-c/wf-pore-c-demo.tar.gz && tar -xzvf wf-pore-c-demo.tar.gz"
+    NF_BEFORE_SCRIPT: "mkdir -p ${CI_PROJECT_NAME}/data/ && wget -O ${CI_PROJECT_NAME}/data/wf-pore-c-demo.tar.gz https://ont-exd-int-s3-euwst1-epi2me-labs.s3.amazonaws.com/wf-pore-c/wf-pore-c-demo.tar.gz && tar -xzvf ${CI_PROJECT_NAME}/data/wf-pore-c-demo.tar.gz -C ${CI_PROJECT_NAME}/data/"
     NF_WORKFLOW_OPTS: "-executor.\\$$local.memory 32GB \
-    --bam wf-pore-c-demo/porec_test.concatemers.bam --chunk_size 100 --ref \
-    wf-pore-c-demo/porec_test.fasta \
-    --cutter NlaIII \
-    --vcf wf-pore-c-demo/porec_test.phased_variants.vcf.gz \
-    --paired_end_minimum_distance 100 --paired_end_maximum_distance 200 --hi_c --mcool --bed"
+      --bam ${CI_PROJECT_NAME}/data/wf-pore-c-demo/porec_test.concatemers.bam --chunk_size 100 --ref \
+      ${CI_PROJECT_NAME}/data/wf-pore-c-demo/porec_test.fasta \
+      --cutter NlaIII \
+      --vcf ${CI_PROJECT_NAME}/data/wf-pore-c-demo/porec_test.phased_variants.vcf.gz \
+      --paired_end_minimum_distance 100 --paired_end_maximum_distance 200 --hi_c --mcool --paired_end"
     CI_FLAVOUR: "new"
 
 macos-run:
@@ -81,10 +81,10 @@ docker-run:
             NF_IGNORE_PROCESSES: "index_bam"
         - if: $MATRIX_NAME == "demo"
           variables:
-                NF_BEFORE_SCRIPT: "wget -O wf-pore-c-demo.tar.gz https://ont-exd-int-s3-euwst1-epi2me-labs.s3.amazonaws.com/wf-pore-c/wf-pore-c-demo.tar.gz && tar -xzvf wf-pore-c-demo.tar.gz"
+                NF_BEFORE_SCRIPT: "mkdir -p ${CI_PROJECT_NAME}/data/ && wget -O ${CI_PROJECT_NAME}/data/wf-pore-c-demo.tar.gz https://ont-exd-int-s3-euwst1-epi2me-labs.s3.amazonaws.com/wf-pore-c/wf-pore-c-demo.tar.gz && tar -xzvf ${CI_PROJECT_NAME}/data/wf-pore-c-demo.tar.gz -C ${CI_PROJECT_NAME}/data/"
                 NF_WORKFLOW_OPTS: "-executor.\\$$local.memory 32GB \
-                --bam wf-pore-c-demo/porec_test.concatemers.bam --chunk_size 100 --ref \
-                wf-pore-c-demo/porec_test.fasta \
+                --bam ${CI_PROJECT_NAME}/data/wf-pore-c-demo/porec_test.concatemers.bam --chunk_size 100 --ref \
+                ${CI_PROJECT_NAME}/data/wf-pore-c-demo/porec_test.fasta \
                 --cutter NlaIII \
-                --vcf wf-pore-c-demo/porec_test.phased_variants.vcf.gz \
+                --vcf ${CI_PROJECT_NAME}/data/wf-pore-c-demo/porec_test.phased_variants.vcf.gz \
                 --paired_end_minimum_distance 100 --paired_end_maximum_distance 200 --hi_c --mcool --paired_end"

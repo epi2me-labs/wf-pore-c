@@ -9,16 +9,16 @@ process to_pairs_file {
     input:
         tuple val(meta), path("monomers.mm2.ns.bam"), path("fasta.fai"), path("fragments.bed")
     output:
-        tuple val(meta), path("fasta.fai"), path("${meta.sample_id}.pairs.gz"), emit: "pairs"
-        tuple val(meta), path("${meta.sample_id}.stats.txt"), emit: "stats"
+        tuple val(meta), path("fasta.fai"), path("${meta.alias}.pairs.gz"), emit: "pairs"
+        tuple val(meta), path("${meta.alias}.stats.txt"), emit: "stats"
     shell:
         def args = task.ext.args ?: "--drop-sam --drop-seq --expand --add-pair-index --add-columns mapq,pos5,pos3,cigar,read_len,matched_bp,algn_ref_span,algn_read_span,dist_to_5,dist_to_3,mismatches"
     """
     pairtools parse2  \
-    --output-stats "${meta.sample_id}.stats.txt" \
+    --output-stats "${meta.alias}.stats.txt" \
     -c "fasta.fai" --single-end --readid-transform 'readID.split(":")[0]' \
     $args "monomers.mm2.ns.bam" > extract_pairs.tmp
-    pairtools restrict  -f "fragments.bed" -o "${meta.sample_id}.pairs.gz" extract_pairs.tmp
+    pairtools restrict  -f "fragments.bed" -o "${meta.alias}.pairs.gz" extract_pairs.tmp
     rm -rf extract_pairs.tmp
     """
 }
@@ -31,13 +31,13 @@ process prepare_hic {
     input:
         tuple val(meta), path("input.pairs.gz"), path("fasta.fai")
     output:
-        path "${meta.sample_id}.hic", emit: hic
+        path "${meta.alias}.hic", emit: hic
     """
     cut -f1,2 fasta.fai > sizes.genome
     pairtools flip input.pairs.gz -c sizes.genome  > flipped.pairs.tmp
     pairtools sort flipped.pairs.tmp > sorted.pairs.tmp
     pairtools dedup --chunksize ${params.pairtools_chunksize} sorted.pairs.tmp > dedup.pairs.tmp
-    java -jar /home/epi2melabs/juicer_tools_1.22.01.jar pre dedup.pairs.tmp "${meta.sample_id}.hic" sizes.genome
+    java -jar /home/epi2melabs/juicer_tools_1.22.01.jar pre dedup.pairs.tmp "${meta.alias}.hic" sizes.genome
     rm -rf "*.pairs.tmp"
     """
 }
@@ -51,7 +51,7 @@ process merge_pairs {
     output:
         tuple val(meta), path("${prefix}.pairs.gz"), emit: merged_pairs
     shell:
-        prefix = task.ext.prefix ?: "${meta.sample_id}"
+        prefix = task.ext.prefix ?: "${meta.alias}"
         def args = task.ext.args ?: "--concatenate"
     """
     # pass a quoted glob, pairtools will do its own globbing
@@ -68,7 +68,7 @@ process merge_pairs_stats {
     output: 
         tuple val(meta), path("${prefix}.pairs.stats.txt")
     shell:
-        prefix = task.ext.prefix ?: "${meta.sample_id}"
+        prefix = task.ext.prefix ?: "${meta.alias}"
         def args = task.ext.args ?: "--merge "
     """
     pairtools stats -o "${prefix}.pairs.stats.txt" $args to_merge/src*.stats.txt
@@ -84,7 +84,7 @@ process pair_stats_report {
     output:
         tuple val(meta), path("${prefix}.pairs.stats.html")
     shell:
-        prefix = task.ext.prefix ?: "${meta.sample_id}"
+        prefix = task.ext.prefix ?: "${meta.alias}"
     """
     create_pairs_report.py "pairs.stats.txt" "${prefix}.pairs.stats.html"
     """
@@ -128,7 +128,7 @@ process merge_mcools {
     output:
         tuple val(meta), path("${prefix}.mcool")
     shell:
-        prefix = task.ext.prefix ?: "${meta.sample_id}"
+        prefix = task.ext.prefix ?: "${meta.alias}"
         def args = task.ext.args ?: " "
     """
     cooler merge  ${prefix}.cool $args to_merge/src*.cool

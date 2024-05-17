@@ -104,18 +104,18 @@ process haplotagReads {
             path(phased_vcf_tbi)
     output:
         tuple val(meta),
-            path("${meta.sample_id}.ht.bam"),
-            path("${meta.sample_id}.ht.bam.csi"),
+            path("${meta.alias}.ht.bam"),
+            path("${meta.alias}.ht.bam.csi"),
             emit: "cs_bam"
         tuple val(meta),
-            path("${meta.sample_id}.ht.txt.gz"),
+            path("${meta.alias}.ht.txt.gz"),
             emit: "haplotagged_monomers"
     shell:
         args = task.ext.args ?: "--ignore-read-groups --skip-missing-contigs "
     """
-    whatshap haplotag --reference "reference.fasta"  -o "${meta.sample_id}.ht.bam" \
-    --output-haplotag-list "${meta.sample_id}.ht.txt.gz" $args "$phased_vcf" "concatemers.cs.bam"
-    samtools index -c "${meta.sample_id}.ht.bam"
+    whatshap haplotag --reference "reference.fasta"  -o "${meta.alias}.ht.bam" \
+    --output-haplotag-list "${meta.alias}.ht.txt.gz" $args "$phased_vcf" "concatemers.cs.bam"
+    samtools index -c "${meta.alias}.ht.bam"
     """
 }
 
@@ -132,7 +132,7 @@ process merge_parquets_to_dataset {
             path("$prefix"),
             emit: "parquets"
     shell:
-        prefix = task.ext.prefix ?: "${meta.sample_id}.chromunity.parquet"
+        prefix = task.ext.prefix ?: "${meta.alias}.chromunity.parquet"
     """
     mkdir $prefix
     cp to_merge/part*.parquet  $prefix/

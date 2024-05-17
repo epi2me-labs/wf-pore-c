@@ -8,11 +8,6 @@ import pysam
 from .util import get_named_logger, wf_parser  # noqa: ABS101
 
 
-def get_sq_lines(xam_file):
-    """Extract the `@SQ` lines from the header of a XAM file."""
-    return pysam.AlignmentFile(xam_file, check_sq=False).header["SQ"]
-
-
 def main(args):
     """Run the entry point."""
     logger = get_named_logger("checkBamHdr")
@@ -27,10 +22,20 @@ def main(args):
     # Set `is_unaligned` accordingly. If there are mixed headers (either with some files
     # containing `@SQ` lines and some not or with different files containing different
     # `@SQ` lines), set `mixed_headers` to `True`.
+    # Also check if there is the SO line, to validate whether the file is (un)sorted.
     first_sq_lines = None
     mixed_headers = False
+    sorted_xam = False
     for xam_file in target_files:
-        sq_lines = get_sq_lines(xam_file)
+        # get the `@SQ` and `@HD` lines in the header
+        with pysam.AlignmentFile(xam_file, check_sq=False) as f:
+            sq_lines = f.header.get("SQ")
+            hd_lines = f.header.get("HD")
+        # Check if it is sorted.
+        # When there is more than one BAM, merging/sorting
+        # will happen regardless of this flag.
+        if hd_lines is not None and hd_lines.get('SO') == 'coordinate':
+            sorted_xam = True
         if first_sq_lines is None:
             # this is the first file
             first_sq_lines = sq_lines
@@ -46,7 +51,9 @@ def main(args):
     # write `is_unaligned` and `mixed_headers` out so that they can be set as env.
     # variables
     sys.stdout.write(
-        f"IS_UNALIGNED={int(is_unaligned)};MIXED_HEADERS={int(mixed_headers)}"
+        f"IS_UNALIGNED={int(is_unaligned)};" +
+        f"MIXED_HEADERS={int(mixed_headers)};" +
+        f"IS_SORTED={int(sorted_xam)}"
     )
     logger.info(f"Checked (u)BAM headers in '{args.input_path}'.")
 

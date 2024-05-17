@@ -15,22 +15,25 @@ def main(args):
     logger = get_named_logger("Report")
     report = labs.LabsReport(
         "Workflow Pore C report", "wf-pore-c",
-        args.params, args.versions)
+        args.params, args.versions, args.wf_version)
 
     with open(args.metadata) as metadata:
-        sample_details = sorted([
-            {
-                'sample': d['alias'],
-                'type': d['type'],
-                'barcode': d['barcode']
-            } for d in json.load(metadata)
-        ], key=lambda d: d["sample"])
+        sample_details = [{
+            'sample': d['alias'],
+            'type': d['type'],
+            'barcode': d['barcode']
+        } for d in json.load(metadata)]
 
     if args.stats:
         with report.add_section("Read summary", "Read summary"):
-            fastcat.SeqSummary(args.stats)
+            names = tuple(d['sample'] for d in sample_details)
+            stats = tuple(args.stats)
+            if len(stats) == 1:
+                stats = stats[0]
+                names = names[0]
+            fastcat.SeqSummary(stats, sample_names=names)
 
-    with report.add_section("Metadata", "Metadata"):
+    with report.add_section("Sample Metadata", "Sample Metadata"):
         tabs = Tabs()
         for d in sample_details:
             with tabs.add_tab(d["sample"]):
@@ -46,20 +49,20 @@ def argparser():
     """Argument parser for entrypoint."""
     parser = wf_parser("report")
     parser.add_argument("report", help="Report output file")
-    parser.add_argument("--stats", nargs='+', help="Fastcat per-read stats file(s).")
     parser.add_argument(
-        "--metadata", default='metadata.json',
-        help="sample metadata")
+        "--stats", nargs='+',
+        help="Fastcat stats histogram directories, \
+          ordered as per entries in --metadata.")
+    parser.add_argument(
+        "--metadata", required=True,
+        help="sample metadata JSON")
     parser.add_argument(
         "--versions", required=True,
         help="directory containing CSVs containing name,version.")
     parser.add_argument(
-        "--params", default=None, required=True,
+        "--params", required=True,
         help="A JSON file containing the workflow parameter key/values")
     parser.add_argument(
-        "--revision", default='unknown',
-        help="git branch/tag of the executed workflow")
-    parser.add_argument(
-        "--commit", default='unknown',
-        help="git commit of the executed workflow")
+        "--wf_version", default='unknown',
+        help="version of the executed workflow")
     return parser
