@@ -67,7 +67,7 @@ process merge_namesorted_bams {
         tuple val(meta), path("${prefix}.${suffix}.bam")
     shell:
         suffix = task.ext.suffix ?: "ns"
-        prefix = task.ext.prefix ?: "${meta.sample_id}"
+        prefix = task.ext.prefix ?: "${meta.alias}"
     """
     samtools cat --threads $task.cpus -o "${prefix}.${suffix}.bam" --no-PG to_merge/src*.bam
     """
@@ -82,7 +82,7 @@ process merge_coordsorted_bams {
     output:
         tuple val(meta), path("${prefix}.bam"), path("${prefix}.bam.csi")
     shell:
-        prefix = task.ext.prefix ?: "${meta.sample_id}.cs"
+        prefix = task.ext.prefix ?: "${meta.alias}.cs"
     """
     samtools merge --threads $task.cpus -o "${prefix}.bam" -p --write-index --no-PG to_merge/src*.bam
     """
@@ -113,7 +113,7 @@ process mosdepth_coverage {
             path("${prefix}.mosdepth.*"),
             emit: summaries
     shell:
-        prefix = task.ext.prefix ?: "${meta.sample_id}"
+        prefix = task.ext.prefix ?: "${meta.alias}"
         args = task.ext.args ?: "--thresholds 1,10,30,60,100"
     """
     mosdepth --threads $task.cpus --d4 --by "fragments.bed" $args $prefix "concatemers.cs.bam"

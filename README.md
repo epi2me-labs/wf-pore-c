@@ -186,13 +186,6 @@ input_reads.fastq   ─── input_directory  ─── input_directory
 | paired_end_maximum_distance | integer | Remove trans pairs and cis- pairs separated by a distance greater than this |  | -1 |
 
 
-### Misc
-
-| Nextflow parameter name  | Type | Description | Help | Default |
-|--------------------------|------|-------------|------|---------|
-| disable_ping | boolean | Enable to prevent sending a workflow ping. |  | False |
-
-
 
 
 

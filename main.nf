@@ -91,14 +91,15 @@ process getParams {
 
 
 process makeReport {
-    label "wfporec"
+    label "wf_common"
     cpus 4
     memory "15 GB"
     input:
         val metadata
-        path "per_read_stats/{?}.gz"
+        path(stats, stageAs: "stats_*")
         path "versions/*"
         path "params.json"
+        val wf_version
     output:
         path "wf-pore-c-report.html"
     script:
@@ -108,10 +109,34 @@ process makeReport {
     echo '${metadata}' > metadata.json
     workflow-glue report $report_name \
         --metadata metadata.json \
-        --stats per_read_stats/* \
+        --stats $stats \
         --versions versions \
-        --params params.json
+        --params params.json \
+        --wf_version $wf_version
+    """
+}
 
+// Creates a new directory named after the sample alias and moves the ingress results
+// into it. So output folder will contain alias named folders with stats.
+process collectIngressResultsInDir {
+    label "wf_common"
+    input:
+        // inputs might be `OPTIONAL_FILE` --> stage in different sub-directories
+        // to avoid name collisions
+        tuple val(meta),
+            path(stats, stageAs: "stats/*")
+    output:
+        // use sub-dir to avoid name clashes (in the unlikely event of a sample alias
+        // being `reads` or `stats`)
+        tuple path("out/*"), val("ingress_results")
+    script:
+    String outdir = "out/${meta["alias"]}"
+    String metaJson = new JsonBuilder(meta).toPrettyString()
+    String stats = stats.fileName.name == OPTIONAL_FILE.name ? "" : stats
+    """
+    mkdir -p $outdir
+    echo '$metaJson' > metamap.json
+    mv metamap.json $stats $outdir
     """
 }
 
@@ -155,6 +180,14 @@ workflow POREC {
                 "stats": true,
                 "fastcat_extra_args": "",
             ])
+            // fastq_ingress doesn't have the index; add one extra null for compatibility.
+            // We do not use variable name as assigning variable name with a tuple
+            // not matching (e.g. meta, bam, bai, stats <- [meta, bam, stats]) causes
+            // the workflow to crash.
+            sample_data = sample_data
+                .map{
+                    it.size() == 4 ? it : [it[0], it[1], null, it[2]]
+                }
         } else {
         // if we didn't get a `--fastq`, there must have been a `--bam` (as is codified
         // by the schema)
@@ -169,7 +202,8 @@ workflow POREC {
         }
 
         // create channel of input chimeric reads
-        input_reads = sample_data.map{meta,bam,reads -> [meta, bam]}
+        input_reads = sample_data.map{meta, path, index, stats -> [meta, path]}
+
         if (params.chunk_size > 0) {
             chunks = index_bam(input_reads, channel.value(params.chunk_size))
             // create tuple for each region
@@ -188,7 +222,7 @@ workflow POREC {
                 [meta + [cutter: params.cutter, vcf:vcf_file, tbi:tbi_file], bam, index, ref]}
         } else {
             // check meta vcf exists, add tbi and convert to files
-            per_sample = sample_data.map{meta,bam,reads -> meta
+            per_sample = sample_data.map{meta, path, index, stats ->
                 vcf_file = meta["vcf"] ? file(meta["vcf"], checkExists: true) : null
                 tbi_file = vcf_file ? file(meta["vcf"] + '.tbi') : null
                 [meta["alias"], vcf_file, tbi_file]}
@@ -241,12 +275,12 @@ workflow POREC {
 
         /// MERGE PORE-C BAMS ///
 
-        // merge coord-sorted bams by sample_id
+        // merge coord-sorted bams by alias
         cs_bam = merge_coordsorted_bams(
             cs_bam_chunks.map(i -> [i[0], i[1]])
             .groupTuple()
         )
-        // merge namesorted bams by sample_id
+        // merge namesorted bams by alias
         ns_bam = merge_namesorted_bams(
             ch_annotated_monomers
             .ns_bam
@@ -342,15 +376,17 @@ workflow POREC {
         // Make a report
         software_versions = getVersions()
         workflow_params = getParams()
-        metadata = input_reads.map { it[0] }.toList()
-        if (params.bam){
-            per_read_stats =  sample_data.map{ meta, samples, stats -> stats.resolve("bamstats.readstats.tsv.gz") }.toList()
-        }
-        else{
-            per_read_stats =  sample_data.map{ meta, samples, stats -> stats.resolve("per-read-stats.tsv.gz") }.toList()
-        }
+    
+        // get metadata and stats files, keeping them ordered (could do with transpose I suppose)
+        sample_data.multiMap{ meta, path, index, stats ->
+            meta: meta
+            stats: stats
+        }.set { for_report }
+        metadata = for_report.meta.collect()
+        // create a file list of the stats, and signal if its empty or not
+        stats = for_report.stats | collect
         report = makeReport(
-            metadata, per_read_stats, software_versions, workflow_params
+            metadata, stats, software_versions, workflow_params, workflow.manifest.version
         )
 
         if (params.hi_c){
@@ -361,7 +397,15 @@ workflow POREC {
             createBed(ns_bam)
         }
       
-        stats = sample_data.map{ meta, samples, stats -> stats}.map{ [it, "ingress_results"] }
+
+        sample_data
+        | map {
+            meta, path, index, stats ->
+            if (stats) [ meta, stats ]
+        }
+        | collectIngressResultsInDir
+
+
         // Group together lists of filtered reads from all the processed chunks
         named_filtered_read_ids = ch_annotated_monomers.filtered_read_ids.groupTuple().map{ meta, read_ids -> tuple(meta.alias, read_ids)}
         named_reads = input_reads.map{ meta, reads -> tuple(meta.alias, reads)}
@@ -375,7 +419,7 @@ workflow POREC {
         name_sorted_bam = ns_bam
         coord_sorted_bam = cs_bam
         report = report
-        stats = stats
+        ingress_results = collectIngressResultsInDir.out
 }
 
 workflow {
@@ -383,7 +427,7 @@ workflow {
         error = "`--params_sheet` parameter is deprecated. Use parameter `--sample_sheet` instead."
     }
     POREC()
-    output(POREC.out.stats)
+    output(POREC.out.ingress_results)
 }
 
 workflow.onComplete {
