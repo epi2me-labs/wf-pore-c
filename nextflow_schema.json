@@ -108,8 +108,8 @@
                 "bed": {
                     "type": "boolean",
                     "default": false,
-                    "description": "Output a BED file of monomer alignments for use with downstream tools.",
-                    "help_text": "Will use the name sorted bam to create a BED file compatible with downstream tools including scaffolding tool [Yahs](https://github.com/c-zhou/yahs)."
+                    "description": "Output a BED file of the paired end BAM alignments for use with downstream tools. Setting this to true will also trigger creation of the paired_end BAM.",
+                    "help_text": "Will use the paired end BAM to create a BED file compatible with downstream tools including scaffolding tool [Yahs](https://github.com/c-zhou/yahs)."
   
 
                 }

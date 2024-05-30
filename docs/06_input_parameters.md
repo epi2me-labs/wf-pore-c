@@ -18,7 +18,7 @@
 |--------------------------|------|-------------|------|---------|
 | out_dir | string | Directory for output of all user-facing files. |  | output |
 | hi_c | boolean | Output a Hi-C formatted file; will convert pairs format to a Hi-C (`.hic`) file which will be compatible with [juicer](https://github.com/aidenlab/juicer) | Load this file with [Juice box](https://www.aidenlab.org/juicebox/) for an alternative contact map visualisation. | False |
-| bed | boolean | Output a BED file of monomer alignments for use with downstream tools. | Will use the name sorted bam to create a BED file compatible with downstream tools including scaffolding tool [Yahs](https://github.com/c-zhou/yahs). | False |
+| bed | boolean | Output a BED file of the paired end BAM alignments for use with downstream tools. Setting this to true will also trigger creation of the paired_end BAM. | Will use the paired end BAM to create a BED file compatible with downstream tools including scaffolding tool [Yahs](https://github.com/c-zhou/yahs). | False |
 
 
 ### Advanced Options

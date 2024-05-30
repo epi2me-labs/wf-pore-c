@@ -36,7 +36,7 @@ process digest_align_annotate {
                 args += "--chromunity_merge_distance ${params.chromunity_merge_distance} "
             }
         }
-        if (params.paired_end) {
+        if (params.paired_end | params.bed) {
             args += "--paired_end "
             if (params.filter_pairs) {
                 args += "--filter_pairs "

@@ -39,7 +39,7 @@ docker-run:
             --cutter NlaIII \
             --vcf test_data/porec_test.phased_variants.vcf.gz --pairs \
             --chromunity --paired_end --filter_pairs --paired_end_minimum_distance 100 \
-            --paired_end_maximum_distance 200"
+            --paired_end_maximum_distance 200 --bed"
         - if: $MATRIX_NAME == "sample-sheet"
           variables:
             NF_WORKFLOW_OPTS: "-executor.\\$$local.memory 32GB \
