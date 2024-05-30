@@ -394,7 +394,7 @@ workflow POREC {
         }
 
         if (params.bed){
-            createBed(ns_bam)
+            createBed(pe_bam)
         }
       
 

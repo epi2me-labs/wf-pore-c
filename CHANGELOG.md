@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [unreleased]
+### Fixed
+- `--bed` parameter will now output BED file using the paired_end BAM file.
+
 ## [v1.1.0]
 ### Added
 - `--bed` parameter which if set to true will output a BED file that is compatible with downstream tools including the scaffolder [Yahs](https://github.com/c-zhou/yahs).
