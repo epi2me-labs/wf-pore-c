@@ -140,18 +140,34 @@ process merge_mcools {
 process createBed {
     label 'wfporec'
     cpus 2
-    memory "8 GB"
+    memory "4 GB"
     input:
         tuple val(meta), path("monomers.mm2.ns.bam")
     output:
-        tuple val(meta), path("${meta.alias}.bed")
+        tuple val(meta), path("${meta.alias}.${task.index}.bed")
     // Use Sed to remove coordinates from monomer names
     // as only required for pairtools.
-    // Sort and remove any duplicates.
     """
     bedtools bamtobed -i monomers.mm2.ns.bam > tmp.out.bed
-    sed -E 's/:[0-9]+//g' tmp.out.bed > tmp.renamed.bed
-    sort -k4,4 tmp.renamed.bed | uniq > "${meta.alias}.bed"
+    sed -E 's/:[0-9]+//g' tmp.out.bed > "${meta.alias}.${task.index}.bed"
+    rm -rf tmp*
+    """
+}
+
+
+process mergeBed {
+    label 'wfporec'
+    cpus params.threads
+    memory "16 GB"
+    input:
+        tuple val(meta), path('to_merge/src*.bed')
+    output:
+        tuple val(meta), path("${meta.alias}.bed")
+    // Merge and sort by the monomer ID so contacts are grouped
+    // and remove any duplicates.
+    """
+    cat to_merge/* > tmp.bed
+    sort --parallel=${task.cpus} -S 15G -k4,4 tmp.bed | uniq > "${meta.alias}.bed"
     rm -rf tmp*
     """
 }
