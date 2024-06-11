@@ -31,6 +31,7 @@ include {
    pair_stats_report
    prepare_hic
    createBed
+   mergeBed
 } from './modules/local/4dn'
 
 
@@ -394,7 +395,9 @@ workflow POREC {
         }
 
         if (params.bed){
-            createBed(pe_bam)
+            bed_chunks = createBed(ch_annotated_monomers.paired_end_bam)
+            mergeBed(bed_chunks.groupTuple())
+
         }
       
 

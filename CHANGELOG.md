@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [unreleased]
 ### Fixed
 - `--bed` parameter will now output BED file using the paired_end BAM file.
+- Reduce memory usage of BED file creation and sorting.
 
 ## [v1.1.0]
 ### Added
