@@ -27,7 +27,7 @@ process to_pairs_file {
 process prepare_hic {
     label 'wfporec'
     cpus 2
-    memory "15 GB"
+    memory "31 GB"
     input:
         tuple val(meta), path("input.pairs.gz"), path("fasta.fai")
     output:
@@ -122,7 +122,7 @@ process pairsToCooler {
 process merge_mcools {
     label 'wfporec'
     cpus 2
-    memory "4 GB"
+    memory "15 GB"
     input:
         tuple val(meta), path('to_merge/src*.cool'), val(resolutions)
     output:

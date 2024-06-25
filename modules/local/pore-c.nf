@@ -66,7 +66,7 @@ process digest_align_annotate {
                 --header "concatemers.bam" \
                 --threads ${digest_annotate_threads} |
             samtools fastq --threads 1 -T '*' |
-            minimap2 -ay -t ${ubam_map_threads} ${minimap2_settings} \
+            minimap2 -ay -t ${ubam_map_threads} ${minimap2_settings} --cap-kalloc 100m --cap-sw-mem 50m \
                 "reference.fasta.mmi" - |
             pore-c-py annotate - "${meta.alias}" --monomers \
                 --threads ${digest_annotate_threads}  --stdout ${args} | \
@@ -79,7 +79,7 @@ process digest_align_annotate {
                 --header "concatemers.bam" \
                 --threads ${digest_annotate_threads} | 
             samtools fastq --threads 1 -T '*' |
-            minimap2 -ay -t ${ubam_map_threads} ${minimap2_settings} \
+            minimap2 -ay -t ${ubam_map_threads} ${minimap2_settings} --cap-kalloc 100m --cap-sw-mem 50m \
                 "reference.fasta.mmi" - |
             pore-c-py annotate - "${meta.alias}" --monomers \
                 --threads ${digest_annotate_threads}  --stdout ${args} | \
