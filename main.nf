@@ -146,7 +146,7 @@ process collectIngressResultsInDir {
 // publish files from a workflow whilst decoupling the publish from the process steps.
 // The process takes a tuple containing the filename and the name of a sub-directory to
 // put the file into. If the latter is `null`, puts it into the top-level directory.
-process output {
+process publish {
     // publish inputs to output directory
     label "wfporec"
     cpus 1
@@ -233,8 +233,16 @@ workflow POREC {
             .combine(per_sample, by: 0)
             .map { it[1..-1] }
             // add tuple values to meta data
-            ch_chunks = combined_samples.map{meta, bam, index, ref, vcf_file, tbi_file ->
+            pre_chunks = combined_samples.map{meta, bam, index, ref, vcf_file, tbi_file ->
             [meta + [vcf:vcf_file, tbi:tbi_file], bam, index, ref]}
+            // use params.cutter if it was missing from user provided sample_sheet
+            ch_chunks = pre_chunks.map{ meta, bam, index, ref -> 
+                if (meta.cutter && params.cutter){
+                    log.warn("Using cutter: ${meta.cutter} from sample sheet column for ${meta.alias}")
+                }
+                cutter = meta.cutter ?: params.cutter
+                return [ meta + ["cutter": cutter], bam, index, ref]
+            }   
         }
         ref = prepare_genome(params.ref, params.minimap2_settings)
         
@@ -430,7 +438,7 @@ workflow {
         error = "`--params_sheet` parameter is deprecated. Use parameter `--sample_sheet` instead."
     }
     POREC()
-    output(POREC.out.ingress_results)
+    publish(POREC.out.ingress_results)
 }
 
 workflow.onComplete {

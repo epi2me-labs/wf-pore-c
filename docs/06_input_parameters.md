@@ -9,7 +9,7 @@
 | analyse_unclassified | boolean | Analyse unclassified reads from input directory. By default the workflow will not process reads in the unclassified directory. | If selected and if the input is a multiplex directory the workflow will also process the unclassified directory. | False |
 | ref | string | A fasta file containing the reference genome to map against |  |  |
 | vcf | string | An optional phased VCF file that will be used to haplotag alignments |  |  |
-| cutter | string | The enzyme used in the restriction digest. | Any enzyme from the Biopython restriction dictionary can be used. See `https://github.com/biopython/biopython/blob/master/Bio/Restriction/Restriction_Dictionary.py` | NlaIII |
+| cutter | string | The enzyme used in the restriction digest. | Any enzyme from the Biopython restriction dictionary can be used. See `https://github.com/biopython/biopython/blob/master/Bio/Restriction/Restriction_Dictionary.py`. This can also be defined per sample: see sample_sheet parameter. | NlaIII |
 
 
 ### Output Options
