@@ -83,6 +83,7 @@ the following command:
 ```
 nextflow pull epi2me-labs/wf-pore-c
 ```
+
 A demo dataset is provided for testing of the workflow.
 It can be downloaded and unpacked using the following commands:
 ```
@@ -105,6 +106,7 @@ nextflow run epi2me-labs/wf-pore-c \
 	--vcf 'wf-pore-c-demo/porec_test.phased_variants.vcf.gz' \
 	-profile standard
 ```
+
 For further information about running a workflow on
 the command line see https://labs.epi2me.io/wfquickstart/
 
@@ -156,7 +158,7 @@ input_reads.fastq   ─── input_directory  ─── input_directory
 | analyse_unclassified | boolean | Analyse unclassified reads from input directory. By default the workflow will not process reads in the unclassified directory. | If selected and if the input is a multiplex directory the workflow will also process the unclassified directory. | False |
 | ref | string | A fasta file containing the reference genome to map against |  |  |
 | vcf | string | An optional phased VCF file that will be used to haplotag alignments |  |  |
-| cutter | string | The enzyme used in the restriction digest. | Any enzyme from the Biopython restriction dictionary can be used. See `https://github.com/biopython/biopython/blob/master/Bio/Restriction/Restriction_Dictionary.py` | NlaIII |
+| cutter | string | The enzyme used in the restriction digest. | Any enzyme from the Biopython restriction dictionary can be used. See `https://github.com/biopython/biopython/blob/master/Bio/Restriction/Restriction_Dictionary.py`. This can also be defined per sample: see sample_sheet parameter. | NlaIII |
 
 
 ### Output Options

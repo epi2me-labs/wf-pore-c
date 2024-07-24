@@ -1,3 +1,3 @@
-flow_cell_id,kit,experiment_id,barcode,alias,type,cutter,vcf
-FA026858,SQK-RBK004,sequencing_20200522,barcode01,s01,test_sample,NlaIII,test_data/porec_test.phased_variants.vcf.gz
-FA026858,SQK-RBK004,sequencing_20200522,barcode02,s02,test_sample,NlaIII,test_data/porec_test.phased_variants.vcf.gz
+flow_cell_id,kit,experiment_id,barcode,alias,type,vcf
+FA026858,SQK-RBK004,sequencing_20200522,barcode01,s01,test_sample,test_data/porec_test.phased_variants.vcf.gz
+FA026858,SQK-RBK004,sequencing_20200522,barcode02,s02,test_sample,test_data/porec_test.phased_variants.vcf.gz

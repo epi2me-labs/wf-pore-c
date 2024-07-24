@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `--bed` parameter will now output BED file using the paired_end BAM file.
 - Reduce memory usage of BED file creation and sorting.
 - Increased memory allocation for `prepare_hic` and `merge_mcool` processes.
+- If sample sheet provided and cutter column not present the workflow will instead use `--cutter` parameter.
+### Changed
+- Bump pore-c-py to v2.1.4 to prevent issues with modified base tags and strip minimap2 tags from inputs.
 ### Added
 - Reduce peak memory usage of minimap2 by adding `--cap-kalloc 100m --cap-sw-mem 50m` to the minimap2 command in the `digest_align_annotate` process.
 

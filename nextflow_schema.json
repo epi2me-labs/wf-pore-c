@@ -62,7 +62,7 @@
                     "type": "string",
                     "default": "NlaIII",
                     "description": "The enzyme used in the restriction digest.",
-                    "help_text": "Any enzyme from the Biopython restriction dictionary can be used. See `https://github.com/biopython/biopython/blob/master/Bio/Restriction/Restriction_Dictionary.py`"
+                    "help_text": "Any enzyme from the Biopython restriction dictionary can be used. See `https://github.com/biopython/biopython/blob/master/Bio/Restriction/Restriction_Dictionary.py`. This can also be defined per sample: see sample_sheet parameter."
                 }
             },
             "allOf": [
