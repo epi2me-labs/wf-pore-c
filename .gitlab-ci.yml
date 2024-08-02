@@ -27,7 +27,9 @@ docker-run:
     parallel:
         matrix:
             - MATRIX_NAME: [
-                "no-sample-sheet-chunk", "sample-sheet", "sample-sheet-cutter", "fastq", "chromunity", "input-dir-hic", "demo"]
+                "no-sample-sheet-chunk", "sample-sheet", "sample-sheet-cutter",
+                "fastq", "chromunity", "input-dir-hic", "demo",
+                "sample-sheet-and-chunk-size"]
     rules:
         - if: ($CI_COMMIT_BRANCH == null || $CI_COMMIT_BRANCH == "dev-template")
           when: never
@@ -98,3 +100,11 @@ docker-run:
                 --cutter NlaIII \
                 --vcf ${CI_PROJECT_NAME}/data/wf-pore-c-demo/porec_test.phased_variants.vcf.gz \
                 --paired_end_minimum_distance 100 --paired_end_maximum_distance 200 --hi_c --mcool --paired_end"
+        - if: $MATRIX_NAME == "sample-sheet-and-chunk-size"
+          variables:
+            NF_WORKFLOW_OPTS: "-executor.\\$$local.memory 32GB \
+            --bam test_data/bams --ref \
+            test_data/porec_test.fasta \
+            --pairs --chunk_size 100 \
+            --chromunity --paired_end --filter_pairs --paired_end_minimum_distance 100 \
+            --paired_end_maximum_distance 200 --sample_sheet test_data/sample_sheet.csv"
