@@ -48,12 +48,13 @@ process index_bam {
         tuple val(meta), path("concatemers.bam")
         val chunk_size
     output:
-        tuple val(meta), path("concatemers.bam"), path("concatemers.bam.bci"), path("chunks.csv")
+        tuple val(meta), path("concatemers.bam"), path("concatemers.bam.bci"), path("indexed_chunks.csv")
     shell:
         args = task.ext.args ?: " "
     """
     bamindex build -c ${params.chunk_size} -t ${task.cpus} concatemers.bam
     bamindex dump concatemers.bam.bci > chunks.csv
+    awk -F' ' -v OFS=' ' 'NR == 1 {print "ID", \$0; next} {print (NR-2), \$0}' chunks.csv > indexed_chunks.csv
     """
 }
 
@@ -208,19 +209,22 @@ workflow POREC {
         if (params.chunk_size > 0) {
             chunks = index_bam(input_reads, channel.value(params.chunk_size))
             // create tuple for each region
-            reads = chunks.map{it -> 
-                tuple(
-                    it[0], it[1], it[2], 
-                    it[3].splitCsv(
-                        header: ['region', 'ref'], skip: 1 , sep:' ').ref)}.transpose()
+            reads = chunks
+                .map{meta, bam, bai, chunk_csv ->
+                    tuple(meta, bam, bai,chunk_csv.splitCsv(header: ['index','region', 'ref'], skip: 1 , sep:' '))}
+                .transpose()
+                .map{ meta, bam, bai, chunk_index ->
+                    [meta, bam, bai, chunk_index.index, chunk_index.ref]}
         } else {
-            reads = input_reads.combine(Channel.of(tuple(OPTIONAL_FILE, 'NA')))
+            // Add optional file and nulls to satisfy channel structure.
+            // These values are ignored in digest_align_annotate
+            reads = input_reads.combine(Channel.of(tuple(OPTIONAL_FILE, null, null)))
         }
         if (!params.sample_sheet) {
-            ch_chunks = reads.map{meta, bam, index, ref ->
+            ch_chunks = reads.map{meta, bam, index, chunk_index, chunk_ref ->
                 vcf_file = params.vcf == null ? null : file(params.vcf, checkExists:true)
                 tbi_file = vcf_file == null ? null : file(params.vcf + '.tbi')
-                [meta + [cutter: params.cutter, vcf:vcf_file, tbi:tbi_file], bam, index, ref]}
+                [meta + [cutter: params.cutter, vcf:vcf_file, tbi:tbi_file], bam, index, chunk_index, chunk_ref]}
         } else {
             // check meta vcf exists, add tbi and convert to files
             per_sample = sample_data.map{meta, path, index, stats ->
@@ -233,21 +237,21 @@ workflow POREC {
             .combine(per_sample, by: 0)
             .map { it[1..-1] }
             // add tuple values to meta data
-            pre_chunks = combined_samples.map{meta, bam, index, ref, vcf_file, tbi_file ->
-            [meta + [vcf:vcf_file, tbi:tbi_file], bam, index, ref]}
+            pre_chunks = combined_samples.map{meta, bam, index, chunk_index, chunk_ref, vcf_file, tbi_file ->
+            [meta + [vcf:vcf_file, tbi:tbi_file], bam, index, chunk_index, chunk_ref]}
             // use params.cutter if it was missing from user provided sample_sheet
-            ch_chunks = pre_chunks.map{ meta, bam, index, ref -> 
+            ch_chunks = pre_chunks.map{ meta, bam, index, chunk_index, chunk_ref -> 
                 if (meta.cutter && params.cutter){
                     log.warn("Using cutter: ${meta.cutter} from sample sheet column for ${meta.alias}")
                 }
                 cutter = meta.cutter ?: params.cutter
-                return [ meta + ["cutter": cutter], bam, index, ref]
+                return [ meta + ["cutter": cutter], bam, index, chunk_index, chunk_ref]
             }   
         }
         ref = prepare_genome(params.ref, params.minimap2_settings)
         
         /// RUN PORE-C TOOLS ///
-        chunks_refs = ch_chunks.map{it[0..3]}.combine(ref.mmi).combine(ref.minimap2_settings)
+        chunks_refs = ch_chunks.combine(ref.mmi).combine(ref.minimap2_settings)
 
         ch_annotated_monomers = digest_align_annotate(chunks_refs)
 
@@ -300,7 +304,7 @@ workflow POREC {
         if (params.coverage || params.pairs || params.mcool || params.hi_c) {
             // for each cutter a bed file of the fragments
             digest_ch = create_restriction_bed(
-                ch_chunks.map{meta, bam, index, ref -> meta.cutter}
+                ch_chunks.map{meta, bam, index, chunk_index, chunk_ref -> meta.cutter}
                 .unique()
                 .combine(ref.fasta)
                 .combine(ref.fai)

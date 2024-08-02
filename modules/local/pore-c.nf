@@ -9,7 +9,7 @@ process digest_align_annotate {
         tuple val(meta), 
             path("concatemers.bam"),
             path("concatemers.bam.bci"),
-            val(ref), path("reference.fasta.mmi"),
+            val(chunk_index), val(chunk_ref), path("reference.fasta.mmi"),
             val(minimap2_settings)
     output:
         tuple val(meta),
@@ -60,8 +60,8 @@ process digest_align_annotate {
         def ubam_map_threads = params.threads - (digest_annotate_threads * 2) - samtools_threads - 1
         if (params.chunk_size > 0){
             """
-            echo "${ref}"
-            bamindex fetch --chunk=${chunk} "concatemers.bam" |
+            echo "${chunk_ref}"
+            bamindex fetch --chunk=${chunk_index} "concatemers.bam" |
                 pore-c-py digest "${meta.cutter}" --max_monomers ${params.max_monomers} --excluded_list "filtered_reads.txt" \
                 --header "concatemers.bam" \
                 --threads ${digest_annotate_threads} |
