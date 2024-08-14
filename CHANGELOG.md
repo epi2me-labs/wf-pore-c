@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+### [v1.2.2]
+### Fixed
+- Capitalised modified base tags additionally removed from monomers if no modified bases for a monomer.
+
 ## [v1.2.1]
 ### Fixed
 - bamindex fetch error when running more than one sample and `--chunk_size` is greater than 0.
