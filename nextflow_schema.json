@@ -17,14 +17,14 @@
             "properties": {
                 "bam": {
                     "type": "string",
-                    "format": "file-path",
+                    "format": "path",
                     "title": "Unaligned BAM",
-                    "description": "An unaligned BAM file containing Pore-C concatemer sequences",
+                    "description": "An unaligned BAM file containing Pore-C concatemer sequences.",
                     "help_text": "This accepts one of three cases: (i) the path to a single BAM file; (ii) the path to a top-level directory containing BAM files; (iii) the path to a directory containing one level of sub-directories which in turn contain BAM files. In the first and second case, a sample name can be supplied with `--sample`. In the last case, the data is assumed to be multiplexed with the names of the sub-directories as barcodes. In this case, a sample sheet can be provided with `--sample_sheet`."
                 },
                 "fastq": {
                     "type": "string",
-                    "format": "file-path",
+                    "format": "path",
                     "title": "FASTQ",
                     "description": "FASTQ files to use in the analysis.",
                     "help_text": "This accepts one of three cases: (i) the path to a single FASTQ file; (ii) the path to a top-level directory containing FASTQ files; (iii) the path to a directory containing one level of sub-directories which in turn contain FASTQ files. In the first and second case, a sample name can be supplied with `--sample`. In the last case, the data is assumed to be multiplexed with the names of the sub-directories as barcodes. In this case, a sample sheet can be provided with `--sample_sheet`."
@@ -50,19 +50,19 @@
                     "type": "string",
                     "title": "Reference FASTA",
                     "format": "file-path",
-                    "description": "A fasta file containing the reference genome to map against"
+                    "description": "A FASTA file containing the reference genome to map against."
                 },
                 "vcf": {
                     "type": "string",
                     "title": "VCF",
                     "format": "file-path",
-                    "description": "An optional phased VCF file that will be used to haplotag alignments"
+                    "description": "An optional phased VCF file that will be used to haplotag alignments."
                 },
                 "cutter": {
                     "type": "string",
                     "default": "NlaIII",
                     "description": "The enzyme used in the restriction digest.",
-                    "help_text": "Any enzyme from the Biopython restriction dictionary can be used. See `https://github.com/biopython/biopython/blob/master/Bio/Restriction/Restriction_Dictionary.py`. This can also be defined per sample: see sample_sheet parameter."
+                    "help_text": "Any enzyme from the Biopython restriction dictionary can be used. See `https://github.com/biopython/biopython/blob/master/Bio/Restriction/Restriction_Dictionary.py`. This can also be defined per sample: see `--sample_sheet` parameter."
                 }
             },
             "allOf": [
@@ -101,15 +101,17 @@
                 },
                 "hi_c": {
                     "type": "boolean",
+                    "title": "Hi-C",
                     "default": false,
-                    "description": "Output a Hi-C formatted file; will convert pairs format to a Hi-C (`.hic`) file which will be compatible with [juicer](https://github.com/aidenlab/juicer)",
+                    "description": "Output a Hi-C formatted file; will convert pairs format to a Hi-C (`.hic`) file which will be compatible with [juicer](https://github.com/aidenlab/juicer).",
                     "help_text": "Load this file with [Juice box](https://www.aidenlab.org/juicebox/) for an alternative contact map visualisation."
                 },
                 "bed": {
                     "type": "boolean",
+                    "title": "BED",
                     "default": false,
-                    "description": "Output a BED file of the paired end BAM alignments for use with downstream tools. Setting this to true will also trigger creation of the paired_end BAM.",
-                    "help_text": "Will use the paired end BAM to create a BED file compatible with downstream tools including scaffolding tool [Yahs](https://github.com/c-zhou/yahs)."
+                    "description": "Output a BED file of the paired-end BAM alignments for use with downstream tools. Setting this to true will also trigger creation of the paired-end BAM.",
+                    "help_text": "Will use the paired-end BAM to create a BED file compatible with downstream tools including scaffolding tool [Yahs](https://github.com/c-zhou/yahs)."
   
 
                 }
@@ -144,10 +146,11 @@
                 "minimap2_settings": {
                     "type": "string",
                     "default": "-x map-ont",
-                    "description": "The minimap2 settings for mapping monomers"
+                    "description": "The minimap2 settings for mapping monomers."
                 },
                 "max_monomers": {
                     "type": "integer",
+                    "title": "Maximum monomers",
                     "default": 250,
                     "description": "The maximum number of monomers allowed for a read to be included in downstream analysis.",
                     "help": "Any reads that have more than this number will be filtered out, and output in a per sample filtered_bam file."
@@ -155,10 +158,11 @@
                 "coverage": {
                     "type": "boolean",
                     "default": false,
-                    "description": "Calculate restriction-fragment coverage using mosdepth"
+                    "description": "Calculate restriction-fragment coverage using mosdepth."
                 },
                 "summary_json": {
                     "type": "boolean",
+                    "title": "Summary JSON",
                     "default": true,
                     "description": "Output pore-c-py annotation summary in json format."
                 }
@@ -167,7 +171,7 @@
         "chromunity_options": {
             "title": "Chromunity Options",
             "type": "object",
-            "description": "Create files for Chromunity analyses",
+            "description": "Create files for Chromunity analyses.",
             "properties": {
                 "chromunity": {
                     "type": "boolean",
@@ -185,7 +189,7 @@
         "4dn_files_options": {
             "title": "4DN files Options",
             "type": "object",
-            "description": "Create files for the 4D nucleome toolset",
+            "description": "Create files for the 4D nucleome toolset.",
             "properties": {
                 "pairs": {
                     "type": "boolean",
@@ -204,14 +208,14 @@
                     "default": false,
                     "title": "Multi-resolution cooler file (mcool)",
                     "description": "Create a multi-resolution cooler file. Will output the cooler formatted file which you can load with cooler.",
-                    "help_text": "see 'https://open2c.github.io/cooler' for more details."
+                    "help_text": "See 'https://open2c.github.io/cooler' for more details."
                 },
                 "cool_bin_size": {
                     "type": "integer",
                     "title": "Cooler file bin size",
                     "default": 1000,
                     "description": "The bin size of the cooler output file in base pairs.",
-                    "help_text": "see 'https://open2c.github.io/cooler' for more details."
+                    "help_text": "See 'https://open2c.github.io/cooler' for more details."
                 },
                 "mcool_resolutions": {
                     "type": "string",
@@ -224,28 +228,28 @@
         "paired_end_bam_options": {
             "title": "Paired-end BAM Options",
             "type": "object",
-            "description": "Create mock paired-end BAM files for legacy tools",
+            "description": "Create mock paired-end BAM files for legacy tools.",
             "properties": {
                 "paired_end": {
                     "type": "boolean",
-                    "title": "Paired end BAM",
+                    "title": "Paired-end BAM",
                     "description": "Create mock paired-end BAM files.",
                     "default": false
                 },
                 "filter_pairs": {
                     "type": "boolean",
                     "default": false,
-                    "description": "Filter paired end reads using minimum and maximum distance parameters."
+                    "description": "Filter paired-end reads using minimum and maximum distance parameters."
                 },
                 "paired_end_minimum_distance": {
                     "type": "integer",
                     "default": -1,
-                    "description": "Remove trans pairs and cis- pairs separated by a distance shorter than this"
+                    "description": "Remove trans/cis pairs separated by a distance shorter than this."
                 },
                 "paired_end_maximum_distance": {
                     "type": "integer",
                     "default": -1,
-                    "description": "Remove trans pairs and cis- pairs separated by a distance greater than this"
+                    "description": "Remove trans/cis pairs separated by a distance greater than this."
                 }
             }
         },
