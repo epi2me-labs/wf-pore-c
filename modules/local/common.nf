@@ -135,3 +135,19 @@ process get_filtered_out_bam{
     samtools view -N filtered.txt "concatemers.bam" > "${alias}".filtered_out.bam
     """
 }
+
+
+process index_vcf {
+    label 'wfporec'
+    memory "4 GB"
+    cpus 3
+    input:
+        tuple val(meta), path(vcf)
+    output:
+        tuple val(meta), path("porec.vcf.gz"), path("porec.vcf.gz.tbi")
+    """
+    gzip -f -c -d "${vcf}" > "porec.vcf"
+    bgzip --threads ${task.cpus} "porec.vcf"
+    tabix "porec.vcf.gz"
+    """
+}

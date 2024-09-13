@@ -29,7 +29,8 @@ docker-run:
             - MATRIX_NAME: [
                 "no-sample-sheet-chunk", "sample-sheet", "sample-sheet-cutter",
                 "fastq", "chromunity", "input-dir-hic", "demo",
-                "sample-sheet-and-chunk-size"]
+                "sample-sheet-and-chunk-size", "vcf-no-tbi",
+                "sample-sheet-no-vcf", "sample-sheet-vcf-no-tbi"]
     rules:
         - if: ($CI_COMMIT_BRANCH == null || $CI_COMMIT_BRANCH == "dev-template")
           when: never
@@ -108,3 +109,29 @@ docker-run:
             --pairs --chunk_size 100 \
             --chromunity --paired_end --filter_pairs --paired_end_minimum_distance 100 \
             --paired_end_maximum_distance 200 --sample_sheet test_data/sample_sheet.csv"
+        - if: $MATRIX_NAME == "vcf-no-tbi"
+          variables:
+            NF_WORKFLOW_OPTS: "-executor.\\$$local.memory 32GB \
+            --fastq test_data/porec_test.concatemers.fastq --ref \
+            test_data/porec_test.fasta \
+            --cutter NlaIII \
+            --vcf test_data/porec_test_no_index.phased_variants.vcf.gz --pairs \
+            --chromunity --paired_end --filter_pairs --paired_end_minimum_distance 100 \
+            --paired_end_maximum_distance 20"
+        - if: $MATRIX_NAME == "sample-sheet-no-vcf"
+          variables:
+            NF_WORKFLOW_OPTS: "-executor.\\$$local.memory 32GB \
+            --bam test_data/bams --ref \
+            test_data/porec_test.fasta \
+            --pairs --chunk_size 100 \
+            --chromunity --paired_end --filter_pairs --paired_end_minimum_distance 100 \
+            --paired_end_maximum_distance 200 --sample_sheet test_data/sample_sheet_no_vcf.csv"
+        - if: $MATRIX_NAME == "sample-sheet-vcf-no-tbi"
+          variables:
+            NF_WORKFLOW_OPTS: "-executor.\\$$local.memory 32GB \
+            --bam test_data/bams --ref \
+            test_data/porec_test.fasta \
+            --pairs --chunk_size 100 \
+            --chromunity --paired_end --filter_pairs --paired_end_minimum_distance 100 \
+            --paired_end_maximum_distance 200 \
+            --sample_sheet test_data/sample_sheet_no_tbi.csv"
