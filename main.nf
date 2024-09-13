@@ -14,6 +14,7 @@ include {
     merge_coordsorted_bams
     mosdepth_coverage
     get_filtered_out_bam
+    index_vcf
 } from './modules/local/common'
 
 include {
@@ -221,16 +222,56 @@ workflow POREC {
             reads = input_reads.combine(Channel.of(tuple(OPTIONAL_FILE, null, null)))
         }
         if (!params.sample_sheet) {
-            ch_chunks = reads.map{meta, bam, index, chunk_index, chunk_ref ->
-                vcf_file = params.vcf == null ? null : file(params.vcf, checkExists:true)
-                tbi_file = vcf_file == null ? null : file(params.vcf + '.tbi')
-                [meta + [cutter: params.cutter, vcf:vcf_file, tbi:tbi_file], bam, index, chunk_index, chunk_ref]}
+            if (params.vcf){
+                // If vcf index does not exist create index
+                vcf_channel = Channel.of(file(params.vcf, checkExists:true))
+                def candidate_tbi = file("${params.vcf}.tbi")
+                vcf_file_tmp = input_reads.combine(vcf_channel).map{ meta, path, vcf -> [meta, vcf]}
+                if (candidate_tbi.exists()){
+                    tbi_file = Channel.of(candidate_tbi)
+                    vcf_file = vcf_channel
+                } else {
+                    vcf = index_vcf(vcf_file_tmp)
+                    vcf_file = vcf.map{meta, vcf, tbi -> vcf}.flatten()
+                    tbi_file = vcf.map{meta, vcf, tbi -> tbi}.flatten()
+                }
+            } else {
+                vcf_file = Channel.of(OPTIONAL_FILE)
+                tbi_file = Channel.of(OPTIONAL_FILE)
+            }
+            ch_chunks = reads 
+            | combine(vcf_file) 
+            | combine(tbi_file)
+            | map{meta, bam, index, chunk_index, chunk_ref, vcf, tbi ->
+                if (!params.vcf){
+                    vcf = null
+                    tbi = null
+                }
+                [meta + [cutter: params.cutter, vcf:vcf, tbi:tbi],
+                bam, index, chunk_index, chunk_ref]}
         } else {
-            // check meta vcf exists, add tbi and convert to files
-            per_sample = sample_data.map{meta, path, index, stats ->
-                vcf_file = meta["vcf"] ? file(meta["vcf"], checkExists: true) : null
-                tbi_file = vcf_file ? file(meta["vcf"] + '.tbi') : null
-                [meta["alias"], vcf_file, tbi_file]}
+            // check if vcf exists if not set to null and haplotag will be skipped
+            // Branch to get samples with vcf
+            sample_data
+                | map{
+                    meta, path, index, stats ->
+                    def vcf_file = meta["vcf"] ? file(meta["vcf"], checkExists: true) : null
+                    def tbi_file = file(meta["vcf"] + '.tbi')
+                    def tbi = vcf_file && tbi_file.exists() ? tbi_file : null
+                    [meta, vcf_file, tbi]
+                }
+                | branch{
+                    indexed_vcf: it[1] != null && it[2] != null
+                    unindexed_vcf: it[1] != null && it[2] == null
+                    no_vcf: true
+                } | set{vcf_fork}
+            // Index vcfs with no existing index
+            vcf = index_vcf(vcf_fork.unindexed_vcf.map{meta, vcf, index -> [meta, vcf]})
+            // Combine back with any samples that have index
+            vcf_index = vcf_fork.indexed_vcf.mix(vcf)
+            // Combine back with samples that have no vcf
+            per_sample = vcf_fork.no_vcf.mix(vcf_index)
+            | map{meta, vcf, tbi -> [meta.alias, vcf, tbi]}         
             // combine with output of ingress
             combined_samples = reads
             .map { [it[0]["alias"], *it] }
