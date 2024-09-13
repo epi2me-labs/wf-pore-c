@@ -31,7 +31,8 @@ def main(args):
             if len(stats) == 1:
                 stats = stats[0]
                 names = names[0]
-            fastcat.SeqSummary(stats, sample_names=names)
+            fastcat.SeqSummary(
+                stats, sample_names=names, alignment_stats=False)
 
     with report.add_section("Sample Metadata", "Sample Metadata"):
         tabs = Tabs()
