@@ -1,7 +1,7 @@
 {
   "files": {
     "workflow-report": {
-      "filepath": "./wf-template-report.html",
+      "filepath": "wf-template-report.html",
       "title": "workflow report",
       "description": "Report for all samples.",
       "mime-type": "text/html",
@@ -9,7 +9,7 @@
       "type": "aggregated"
     },
     "read-stats-per-file": {
-      "filepath": "./ingress_results/reads/fastcat_stats/per-file-stats.tsv",
+      "filepath": "ingress_results/reads/fastcat_stats/per-file-stats.tsv",
       "title": "Per file read stats",
       "description": "A TSV with per file read stats, including all samples.",
       "mime-type": "text/tab-separated-values",
@@ -17,7 +17,7 @@
       "type": "aggregated"
     },
     "read-stats-per-read": {
-      "filepath": "./ingress_results/reads/fastcat_stats/per-read-stats.tsv",
+      "filepath": "ingress_results/reads/fastcat_stats/per-read-stats.tsv",
       "title": "Per read stats",
       "description": "A TSV with per read stats, including all samples.",
       "mime-type": "text/tab-separated-values",
@@ -25,7 +25,7 @@
       "type": "aggregated"
     },
     "run-ids": {
-      "filepath": "./ingress_results/reads/fastcat_stats/run_ids",
+      "filepath": "ingress_results/reads/fastcat_stats/run_ids",
       "title": "Run ID's",
       "description": "List of run ID's present in reads.",
       "mime-type": "text/plain",
@@ -33,7 +33,7 @@
       "type": "aggregated"
     },
     "metamap": {
-      "filepath": "./ingress_results/reads/metamap.json",
+      "filepath": "ingress_results/reads/metamap.json",
       "title": "Meta map json",
       "description": "Meta data used in workflow presented in a JSON.",
       "mime-type": "text/json",
@@ -41,7 +41,7 @@
       "type": "aggregated"
     },
     "sample-data": {
-      "filepath": "./ingress_results/reads/{{ alias }}.fastq.gz",
+      "filepath": "ingress_results/reads/{{ alias }}.fastq.gz",
       "title": "Concatenated sequence data",
       "description": "Per-sample reads concatenated in to one fastq file.",
       "mime-type": "text/json",
@@ -49,7 +49,7 @@
       "type": "per-sample"
     },
     "coord-sorted-bam": {
-      "filepath": "./bams/{{ alias }}.cs.bam",
+      "filepath": "bams/{{ alias }}.cs.bam",
       "title": "Coordinate-sorted Bam",
       "description": "Coordinate-sorted Bam.",
       "mime-type": "application/gzip",
@@ -57,7 +57,7 @@
       "type": "per-sample"
     },
     "coord-sorted-bam-bai": {
-      "filepath": "./bams/{{ alias }}.cs.bam.bai",
+      "filepath": "bams/{{ alias }}.cs.bam.bai",
       "title": "Coordinate-sorted Bam Index",
       "description": "Coordinate-sorted Bam Index.",
       "mime-type": "application/octet-stream",
@@ -65,7 +65,7 @@
       "type": "per-sample"
     },
     "name-sorted-bam": {
-      "filepath": "./bams/{{ alias }}.ns.bam",
+      "filepath": "bams/{{ alias }}.ns.bam",
       "title": "Name-sorted Bam",
       "description": "Name-sorted Bam.",
       "mime-type": "application/octet-stream",
@@ -73,7 +73,7 @@
       "type": "per-sample"
     },
     "pairs": {
-      "filepath": "./pairs/{{ alias }}.pairs.gz",
+      "filepath": "pairs/{{ alias }}.pairs.gz",
       "title": "Pairs file",
       "description": "This file contains contact information in a human-readable tabular format, and can be used with downstream tools. See [Pairtools documentation](https://pairtools.readthedocs.io/en/latest/formats.html#pairs) for full specification.",
       "mime-type": "application/gzip",
@@ -81,7 +81,7 @@
       "type": "per-sample"
     },
     "pairs-stats": {
-      "filepath": "./pairs/{{ alias }}.pairs.stats.txt",
+      "filepath": "pairs/{{ alias }}.pairs.stats.txt",
       "title": "Pairs summary stats file",
       "description": "Summary statistics of the pairs file. See this [overview](https://pairtools.readthedocs.io/en/latest/stats.html) for a full specification.",
       "mime-type": "text/plain",
@@ -89,7 +89,7 @@
       "type": "per-sample"
     },
     "pairs-report": {
-      "filepath": "./pairs/{{ alias }}.pairs.stats.html",
+      "filepath": "pairs/{{ alias }}.pairs.stats.html",
       "title": "Pairs summary report",
       "description": "Pairs html report with result including an interactive contact map and statistics. See [pairsqc documentation](https://github.com/4dn-dcic/pairsqc) for further details.",
       "mime-type": "text/html",
@@ -97,7 +97,7 @@
       "type": "per-sample"
     },
     "mcool": {
-      "filepath": "./cooler/{{ alias }}.mcool",
+      "filepath": "cooler/{{ alias }}.mcool",
       "title": "Multi-resolution cool file",
       "description": "Multi-resolution cool `.mcool` file which can be used with downstream tools to provide a high resolution genomic interaction matrix. See [Cool tools documentation](https://github.com/open2c/cooltools) for details on downstream analysis.",
       "mime-type": "application/octet-stream",
@@ -105,7 +105,7 @@
       "type": "per-sample"
     },
     "paired_end_bam": {
-      "filepath": "./paired_end/{{ alias }}.ns.bam",
+      "filepath": "paired_end/{{ alias }}.ns.bam",
       "title": "Paired-end BAM",
       "description": "Mock paired end BAM.",
       "mime-type": "application/octet-stream",
@@ -113,7 +113,7 @@
       "type": "per-sample"
     },
     "chromunity": {
-      "filepath": "./chromunity",
+      "filepath": "chromunity",
       "title": "Chromunity parquet files.",
       "description": "Chromunity directory with parquet files which can be used with the Chromunity package. Chromunity enables the nomination and statistical evaluation of high order interactions. See [Chromunity documentation](http://mskilab.com/chromunity/tutorial.html) for further details.",
       "mime-type": "text/directory",
@@ -121,7 +121,7 @@
       "type": "per-sample"
     },
     "fragments-bed": {
-      "filepath": "./paireds/fragments.bed",
+      "filepath": "paireds/fragments.bed",
       "title": "Fragments BED",
       "description": "File with the DNA fragments created from the virtual digest.",
       "mime-type": "text/tab-separated-values",
@@ -129,7 +129,7 @@
       "type": "per-sample"
     },
     "hi-c": {
-      "filepath": "./hi-c/{{ alias }}.hic",
+      "filepath": "hi-c/{{ alias }}.hic",
       "title": "Hi-C for contact map",
       "description": "File which can be loaded into the [Juice box tool](https://www.aidenlab.org/juicebox/) for an alternative contact map visualisation.",
       "mime-type": "application/octet-stream",
@@ -137,7 +137,7 @@
       "type": "per-sample"
     },
     "filtered_out": {
-      "filepath": "./filtered_out/{{ alias }}.bam",
+      "filepath": "filtered_out/{{ alias }}.bam",
       "title": "Filtered out reads",
       "description": "BAM file containing any reads that were filtered out at the digest step and not included in the analysis.",
       "mime-type": "application/octet-stream",

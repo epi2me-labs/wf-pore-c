@@ -6,6 +6,9 @@ include {
     xam_ingress
 } from "./lib/ingress"
 include {
+    getParams
+} from "./lib/common"
+include {
     index_ref_fai
     decompress_ref
     publish_artifact
@@ -74,21 +77,6 @@ process getVersions {
     whatshap --version | sed 's/^/whatshap,/' >> versions.txt
     pore-c-py --version | sed 's/ /,/' >> versions.txt
     samtools --version | (head -n 1 && exit 0) | sed 's/ /,/' >> versions.txt
-    """
-}
-
-
-process getParams {
-    label "wfporec"
-    cpus 1
-    memory "4 GB"
-    output:
-        path "params.json"
-    script:
-        String paramsJSON = new JsonBuilder(params).toPrettyString()
-    """
-    # Output nextflow params object to JSON
-    echo '$paramsJSON' > params.json
     """
 }
 
