@@ -2,7 +2,7 @@
     "$schema": "http://json-schema.org/draft-07/schema",
     "$id": "https://raw.githubusercontent.com/./master/nextflow_schema.json",
     "title": "epi2me-labs/wf-pore-c",
-    "workflow_title": "Pore-c Workflow",
+    "workflow_title": "Pore-C",
     "description": "Workflow for analysing Pore-c data for chromatin conformation capture.",
     "demo_url": "https://ont-exd-int-s3-euwst1-epi2me-labs.s3.amazonaws.com/wf-pore-c/wf-pore-c-demo.tar.gz",
     "aws_demo_url": "https://ont-exd-int-s3-euwst1-epi2me-labs.s3.amazonaws.com/wf-pore-c/wf-pore-c-demo/aws.nextflow.config",
@@ -269,7 +269,17 @@
                 "disable_ping": {
                     "type": "boolean",
                     "default": false,
-                    "description": "Enable to prevent sending a workflow ping."
+                    "description": "Enable to prevent sending a workflow ping.",
+                    "overrides": {
+                        "epi2mecloud": {
+                            "hidden": true
+                        }
+                    }
+                },
+                "store_dir": {
+                    "type": "string",
+                    "hidden": true,
+                    "format" : "directory-path"
                 },
                 "version": {
                     "type": "boolean",
