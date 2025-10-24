@@ -52,9 +52,6 @@ nextflow run epi2me-labs/wf-pore-c \
 	--hi_c \
 	--mcool \
 	--paired_end \
-	--paired_end_maximum_distance 200 \
-	--paired_end_minimum_distance 100 \
-	--phased_vcf 'wf-pore-c-demo/porec_test.phased_variants.vcf.gz' \
 	--ref 'wf-pore-c-demo/porec_test.fasta' \
 	--vcf 'wf-pore-c-demo/porec_test.phased_variants.vcf.gz' \
 	-profile standard

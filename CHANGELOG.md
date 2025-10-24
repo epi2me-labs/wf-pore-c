@@ -11,6 +11,7 @@ This patch release of wf-pore-c updates internal workflow naming and fixes the i
     - Reduce verbosity of debug logging from fastcat which can occasionally occlude errors found in FASTQ files during ingress.
     - Log banner art to say "EPI2ME" instead of "EPI2ME Labs" to match current branding. This has no effect on the workflow outputs.
     - pre-commit configuration to resolve an internal dependency problem with flake8. This has no effect on the workflow.
+- Updated the example command.
 ### Fixed
 - Updated to wf-template v5.6.2, fixing:
     - Sequence summary read length N50 incorrectly displayed minimum read length, it now correctly shows the N50.
